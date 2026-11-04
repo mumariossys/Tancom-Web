@@ -8,7 +8,7 @@
     "start": "npm run build && electron .",
     "pack": "npm run build && electron-builder --dir",
     "dist:win": "npm run build && electron-builder --win",
-    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:mac": "npm run build && electron-builder --mac --arm64",
     "dist:all": "npm run build && electron-builder --win --mac"
   },
   "dependencies": {
@@ -20,16 +20,26 @@
     "electron-builder": "^24.13.3",
     "typescript": "^5.4.5"
   },
+  "overrides": {
+    "node-abi": "3.101.0"
+  },
   "build": {
     "extends": null,
     "appId": "us.tancom.desktop",
     "productName": "TanCom",
     "copyright": "Copyright © 2026 TanCom",
     "asar": false,
+    "directories": {
+      "output": "packaging-out"
+    },
     "files": [
       "dist/**/*",
+      "!dist/**/*.map",
+      "!dist/mac{,-arm64,-x64,-universal}{,/**/*}",
+      "!dist/*-unpacked{,/**/*}",
+      "!**/*.framework{,/**/*}",
       "assets/**/*",
-      "node_modules/**/*"
+      "!node_modules/electron{,/**/*}"
     ],
     "mac": {
       "category": "public.app-category.productivity",
