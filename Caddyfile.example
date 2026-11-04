@@ -1,0 +1,8 @@
+# Local-only example, after explicit isolated-backend setup.
+# Browser URL http://localhost:5173 matches an existing backend local CORS origin.
+# Vite: 5174; API: 8080. No path stripping; WebSockets are forwarded automatically.
+http://localhost:5173 {
+  @api path /api /api/*
+  reverse_proxy @api 127.0.0.1:8080
+  reverse_proxy 127.0.0.1:5174
+}

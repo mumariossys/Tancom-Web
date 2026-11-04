@@ -1,0 +1,19 @@
+{
+  "createdAt": "2026-11-02T14:01:18.710Z",
+  "applicationSourceModified": false,
+  "productionAuthenticationModified": false,
+  "productionDatabaseAccessed": false,
+  "deployed": false,
+  "githubRepositoryCreated": false,
+  "pushed": false,
+  "packagingChanges": [
+    "Minimal web/API/shared-library workspace; mobile and design sandbox excluded.",
+    "Desktop companion source included but excluded from the main dependency install.",
+    "Original direct dependency resolutions retained; cross-platform optional binary exclusions removed.",
+    "Only the eight required original uploaded assets are included.",
+    "Desktop source-download archive regenerated from the copied companion source.",
+    "Export-only README, local launch guard, Caddy example, env template, scanner and integrity tools.",
+    "No original .env, Git history, workflow definitions, installers, database rows or storage files.",
+    "Two isolated-test support modules are included only for the existing offline auth-review fixtures."
+  ]
+}

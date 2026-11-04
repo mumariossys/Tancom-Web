@@ -1,0 +1,26 @@
+{
+  "name": "tancom-web-repository",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.26.1",
+  "engines": {
+    "node": ">=22.13.0",
+    "pnpm": ">=10.26.1 <11"
+  },
+  "scripts": {
+    "typecheck:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm --filter @workspace/tancom run typecheck && pnpm --filter @workspace/api-server run typecheck",
+    "build:web": "node --env-file-if-exists=.env tools/run.mjs build-web",
+    "build:api": "pnpm --filter @workspace/api-server run build",
+    "build": "pnpm typecheck && pnpm build:web && pnpm build:api",
+    "dev:web": "node --env-file-if-exists=.env tools/run.mjs dev-web",
+    "dev:api": "node --env-file-if-exists=.env tools/run.mjs dev-api",
+    "test": "node --test tools/export.test.mjs docs/security/clerk-trust-review/compatibility.test.mjs",
+    "verify:source": "node tools/verify-source.mjs",
+    "scan:credentials": "node tools/scan-credentials.mjs"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.2",
+    "prettier": "^3.8.1"
+  }
+}

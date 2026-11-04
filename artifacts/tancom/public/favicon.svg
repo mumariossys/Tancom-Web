@@ -1,0 +1,33 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0d1b4b"/>
+      <stop offset="100%" stop-color="#0a2875"/>
+    </linearGradient>
+    <linearGradient id="cGrad" x1="260" y1="90" x2="460" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2196f3"/>
+      <stop offset="100%" stop-color="#00b4ff"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+
+  <!-- T letter — bold, dark navy/white -->
+  <rect x="56" y="96" width="196" height="44" rx="8" fill="#ffffff"/>
+  <rect x="124" y="96" width="60" height="300" rx="8" fill="#ffffff"/>
+
+  <!-- C arc — thick ring segment (270° sweep from top-right going counter-clockwise) -->
+  <!-- Center: (370,256), radius 110, stroke 44 -->
+  <circle cx="370" cy="256" r="112" fill="none" stroke="url(#cGrad)" stroke-width="50"
+    stroke-dasharray="530 176"
+    stroke-dashoffset="88"
+    stroke-linecap="round"/>
+
+  <!-- Play triangle inside C -->
+  <polygon points="345,222 345,290 405,256" fill="url(#cGrad)"/>
+
+  <!-- Signal wave arcs to the right of C -->
+  <path d="M468 210 Q510 256 468 302" stroke="#00b4ff" stroke-width="22" fill="none" stroke-linecap="round" opacity="0.85"/>
+  <path d="M492 190 Q548 256 492 322" stroke="#2196f3" stroke-width="16" fill="none" stroke-linecap="round" opacity="0.5"/>
+</svg>

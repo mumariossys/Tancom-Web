@@ -1,0 +1,61 @@
+{
+  "name": "TanCom – Video Meetings",
+  "short_name": "TanCom",
+  "description": "HD video conferencing with screen sharing, recording, and team collaboration.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1b4b",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["productivity", "communication"],
+  "screenshots": [
+    {
+      "src": "/opengraph.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "TanCom meeting room"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Meeting",
+      "short_name": "New Meeting",
+      "description": "Start an instant meeting",
+      "url": "/meetings?action=new",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Join Meeting",
+      "short_name": "Join",
+      "description": "Join a meeting by code",
+      "url": "/join",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

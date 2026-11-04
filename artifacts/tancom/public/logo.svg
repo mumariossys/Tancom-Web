@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 176 44" width="176" height="44">
+  <!-- TC icon: dark navy rounded square -->
+  <rect x="0" y="0" width="44" height="44" rx="9" fill="#0d1b4b"/>
+
+  <!-- T letter (white) -->
+  <rect x="6" y="10" width="18" height="4.5" rx="1.5" fill="#ffffff"/>
+  <rect x="12.5" y="10" width="5" height="25" rx="1.5" fill="#ffffff"/>
+
+  <!-- C arc (blue gradient via stop-color) -->
+  <circle cx="33" cy="24" r="10" fill="none" stroke="#2196f3" stroke-width="4.5"
+    stroke-dasharray="47 16" stroke-dashoffset="8" stroke-linecap="round"/>
+
+  <!-- Play triangle inside C -->
+  <polygon points="30,20 30,28 37,24" fill="#2196f3"/>
+
+  <!-- Signal arc -->
+  <path d="M42 17 Q48 24 42 31" stroke="#00b4ff" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+
+  <!-- Wordmark: "Tan" dark, "Com" blue -->
+  <text x="54" y="31" font-family="Inter,-apple-system,BlinkMacSystemFont,sans-serif"
+    font-size="23" font-weight="700" fill="#0d1b4b" letter-spacing="-0.5">Tan</text>
+  <text x="98" y="31" font-family="Inter,-apple-system,BlinkMacSystemFont,sans-serif"
+    font-size="23" font-weight="700" fill="#2563eb" letter-spacing="-0.5">Com</text>
+</svg>

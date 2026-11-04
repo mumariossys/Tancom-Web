@@ -1,0 +1,1679 @@
+{
+  "description": "All selected original files are copied byte-for-byte; added setup tooling is export-only.",
+  "originalFileCount": 417,
+  "originalFiles": [
+    {
+      "path": "artifacts/api-server/build.mjs",
+      "sha256": "a268757bc319f2ccaf2f2661d6616ea9cab3c8d8bc45b46b0ebfdb2bc6180267"
+    },
+    {
+      "path": "artifacts/api-server/dev-server.mjs",
+      "sha256": "b99e28da7d2cfd4c01ed394e9567c27c5d7acfe2b35e1e4be33a8938e1b3dac1"
+    },
+    {
+      "path": "artifacts/api-server/package.json",
+      "sha256": "bf6c4840daedc2871832dda93f8ade219d3153b776c9c598db4fbb9770bd6806"
+    },
+    {
+      "path": "artifacts/api-server/src/app.ts",
+      "sha256": "5c97672d5d403bce391bdb2e9c891869829f94cfacc526249374ffb17e3e74fa"
+    },
+    {
+      "path": "artifacts/api-server/src/index.ts",
+      "sha256": "ac27fe9a9a6aea84627ba9e2f80e26216a8d0a7a623fb6a2059c98e63bcb5b8c"
+    },
+    {
+      "path": "artifacts/api-server/src/lib/.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/api-server/src/lib/auth.ts",
+      "sha256": "4e4644e9699b71532a22be493ad6a5010e0c9d1112f4429aae4bb59e4a232ccd"
+    },
+    {
+      "path": "artifacts/api-server/src/lib/blocking.ts",
+      "sha256": "c798d0f8872feef5656ec1c479646ec3c5edf82a11039571ea0d7299436478db"
+    },
+    {
+      "path": "artifacts/api-server/src/lib/chatHelpers.ts",
+      "sha256": "fba624f9b1fda9e0d266ecaa0cf66ab4ff3fb879ef8f899a3305adcc36aae43d"
+    },
+    {
+      "path": "artifacts/api-server/src/lib/email.ts",
+      "sha256": "ea896506e6273347821a096b59122f39e5e75fa1657dc83f574b547483369024"
+    },
+    {
+      "path": "artifacts/api-server/src/lib/ensureClerkRedirectUrls.ts",
+      "sha256": "7bddd236eaba1fdc0669acf4e6227f824c9abc9f2e0c2ee7d3c0b065cb3872d7"
+    },
+    {
+      "path": "artifacts/api-server/src/lib/groupHelpers.ts",
+      "sha256": "42bb684bf0404595a4153336638a33a1221cfad40c6b6377a363908957692bb4"
+    },
+    {
+      "path": "artifacts/api-server/src/lib/logger.ts",
+      "sha256": "29e1ca75036fe917595a3a74fd450857d845836fe0625c30b9caa02df4acba62"
+    },
+    {
+      "path": "artifacts/api-server/src/lib/meetingCode.ts",
+      "sha256": "2c3b11459fd83260c109f9159f6e6c29ecf724ef66339bfef22ce6e920e04f80"
+    },
+    {
+      "path": "artifacts/api-server/src/lib/meetingReaper.ts",
+      "sha256": "8280b02903eb5a4369171ad4b3d710e14d890be5d634ace50c7b059f8bc90186"
+    },
+    {
+      "path": "artifacts/api-server/src/lib/objectAcl.ts",
+      "sha256": "e8aa798d7d043c38d2cc6904e03f969ff1f6591d2ebca5a37e90a295adda09f1"
+    },
+    {
+      "path": "artifacts/api-server/src/lib/objectStorage.ts",
+      "sha256": "a5f8615ef1e8ad8a061a6f95bb955b7898279e315834d1cac0f1845111a3987a"
+    },
+    {
+      "path": "artifacts/api-server/src/lib/permissions.ts",
+      "sha256": "c7d235b1db1a460da0fb6fdf01a50d287f892668568c391ee3784d480a02f19c"
+    },
+    {
+      "path": "artifacts/api-server/src/lib/rcCursor.ts",
+      "sha256": "4439c405a2f4d4a67edae2233b87ccac0dfa6ce02d9621971e09281e126e6f59"
+    },
+    {
+      "path": "artifacts/api-server/src/middlewares/.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "artifacts/api-server/src/middlewares/clerkProxyMiddleware.ts",
+      "sha256": "ecbc29501fb7bb1e1a28d86ab092500756577d8a45de1938c1155b807e21bacd"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/account.ts",
+      "sha256": "be127534e3dddf0903fe51fa14cfd56658b4d66fc69f0c628566d8abfb7f6ebf"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/admin.ts",
+      "sha256": "70b9a4c8921cfc1cd7ff16744989a05e7fe4a51a6cec0d2b4d4781f042193d49"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/aiAssist.ts",
+      "sha256": "19999adcdf72877a18c743c53494f747a7740967ead2a187b8f8a0f43d4bad21"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/calls.ts",
+      "sha256": "be505da4956e7e076f4aa740d2ce214560e3f5f94c0de77c10c2fb272b0e6fce"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/chat.ts",
+      "sha256": "ca8e0ea6f7be4443a779c371a1db0719980f3eecc92f18699316ecaddc2afd7c"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/communities.ts",
+      "sha256": "4334f179be5db8ae1be6109a8fd10323d534b02e73f924ef4de81a50f1b7a40f"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/contacts.ts",
+      "sha256": "f364814333911106ab2631caeadcb823719a01e974cb0daf76815472d5c9a6d5"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/dashboard.ts",
+      "sha256": "fa829a803a983e9dc5ffeb1ac0f8677e5dd1f90d2adb7577cde33b608850d5f9"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/debug.ts",
+      "sha256": "6c1d3b5dbf6144389532f1f1a6c0bc6c9ff2b78131949672690fe980034adbb7"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/groupPosts.ts",
+      "sha256": "cb7f3c3860b06e4b7a44d636097819f11aa4fc3f9538c9927c510d6b5dc0263c"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/groups.ts",
+      "sha256": "87829e24b115f40b84ef74ece8cdf2109fc2b8fad4cead9707befd4578fff001"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/health.ts",
+      "sha256": "7356498fe8a02717e1ea96bdcda5810d12ad386991c034bcf0be69dc5a14087b"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/index.ts",
+      "sha256": "13be80f23293a68fa99431a321de86ab3753c251b404da29d2733248e02956fb"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/live.ts",
+      "sha256": "a50eebb522d376f00ab36e21a0d4b88ac314d14211674859047c45d268dd814d"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/livekit.ts",
+      "sha256": "d9b0e667e06b873501687ae7dea971716bcbc08eb06134e87d591d6fb5160134"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/meetings.ts",
+      "sha256": "795e7e70be1d5cd98db7e11adef573db0d00658b8a18335ed66e5f2649df53e1"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/notes.ts",
+      "sha256": "43e643cf90c0e0eea078ef64501553432f2b613cd7cc3b8cc5c58c32349c5189"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/notifications.ts",
+      "sha256": "013d6ada2fab681fac43747af09fda1320319fe2984cac11fa9220494843c0ea"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/owner.ts",
+      "sha256": "d09cba91f2aa7d23a8c6b6faf88a82b6e24f17da1347b2633ee2155293dc1b43"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/participants.ts",
+      "sha256": "945cc6bd5bc9b0ada2c5b76f7396ac4c1e98173c8cbe6076c3c15b51fc12514d"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/phone.ts",
+      "sha256": "f057df318c67c57378e46e720ffdbc9e97bf6bc432ab0282c900627846deeacb"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/polls.ts",
+      "sha256": "2d73e7b9fea8f6535ded3f93127dd00f44b65fb8eb50ad05662ce69eb238bfab"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/profile.ts",
+      "sha256": "04984d076bc4b9a4b1949ffece0037be3b0ecb05303753dc6fa19b609256446a"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/recordings.ts",
+      "sha256": "573033a210dd8c3b495efd52c689db2ab03fb7af8b8a3c84f5f93b7f7322019c"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/register.ts",
+      "sha256": "214ea5b6d74b98842bfde9b79291cbbc408f78a672b968b87e54f12f6b7764d7"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/remoteAccess.ts",
+      "sha256": "6a93baf0915eb6e477d640d2dd4934df8f5a96e3881c66ada3d42277b3986ca2"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/sessions.ts",
+      "sha256": "0d0edd2793be1c4bd592f9a0b234e09f3cfdc86e369411522bf4cf2c4e3d1bf9"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/signin.ts",
+      "sha256": "258662e7926134c33f1850de17467713fc7e77110feae478fc713b1a6c104511"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/sms.ts",
+      "sha256": "65a48d580cf3da09d12cedb8759071a8b12f7e0b789b97e2c2b37161f3bf0751"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/storage.ts",
+      "sha256": "260f99151a305e651d7f25d24f02f8a605ff88f679db8cd0b2470f735b17dff7"
+    },
+    {
+      "path": "artifacts/api-server/src/routes/verify.ts",
+      "sha256": "b46c91843d06b86f148757e09c4eebd4262afaecb3e0d1a7501b8d431ff54f18"
+    },
+    {
+      "path": "artifacts/api-server/tsconfig.json",
+      "sha256": "11ce0858aad50a39a3209ad4d7f4a94b98f98cd44376fc4f5a3118914fd57075"
+    },
+    {
+      "path": "artifacts/tancom-desktop/README.md",
+      "sha256": "e229ce00d31e1cfa1787a4715789c2637d1de73530fe70813a71169706f3c1d5"
+    },
+    {
+      "path": "artifacts/tancom-desktop/assets/dmg-background.png",
+      "sha256": "d99f3cd2d05608dc59f0390926a797731945404d916cbfc1c33e7a64ca2a7b3b"
+    },
+    {
+      "path": "artifacts/tancom-desktop/assets/icon-source.png",
+      "sha256": "c53ae5542e30ffad446d1eef852d8747c43f761f5dc487692b7e5abc970bc493"
+    },
+    {
+      "path": "artifacts/tancom-desktop/assets/icon.icns",
+      "sha256": "a7b6ca11df4f0c28ccde003d29f344155230b9e2703d1948c8b9a588bf161556"
+    },
+    {
+      "path": "artifacts/tancom-desktop/assets/icon.ico",
+      "sha256": "8cb8554c5153285bd01a2745c10a75c4f1bea42ce1b83795a3e7d41ed55ce56f"
+    },
+    {
+      "path": "artifacts/tancom-desktop/assets/icon.png",
+      "sha256": "68db32d2020d1296a84acdfe9aeac72291bf7cc430afe2959f5ce4a67c6935ec"
+    },
+    {
+      "path": "artifacts/tancom-desktop/electron/main.ts",
+      "sha256": "f5b188223a519cf533c1d19d50e001301fb68a62c0ea95302e869901f7515d3f"
+    },
+    {
+      "path": "artifacts/tancom-desktop/electron/preload.ts",
+      "sha256": "3d9e4939a58d795fbfc95f75b6b9dfbd5021f49d18456148a4b0deded8052eeb"
+    },
+    {
+      "path": "artifacts/tancom-desktop/electron/robotjs.d.ts",
+      "sha256": "961720d668b8cc22ec837d6d549bdbf58102fd51e0c590488c80cb6d78808e91"
+    },
+    {
+      "path": "artifacts/tancom-desktop/package.json",
+      "sha256": "1679717b42153e1aed5ab15c3b33b2919c0e0899c437e542194feda086145e22"
+    },
+    {
+      "path": "artifacts/tancom-desktop/setup.bat",
+      "sha256": "78f815a41f196ada82a91a43fe92a3286801d3d20bacb1748e29cc9a8efd8f87"
+    },
+    {
+      "path": "artifacts/tancom-desktop/setup.command",
+      "sha256": "d37ef1cad05972012184433af0808bd754fe9e8085d64baadd13ebddaf3b5bc0"
+    },
+    {
+      "path": "artifacts/tancom-desktop/tsconfig.json",
+      "sha256": "d013eef382cc87274a2707e7df0d78cde2148a4f26d7e0255ca194be34c3da83"
+    },
+    {
+      "path": "artifacts/tancom/components.json",
+      "sha256": "3a5d5af62f05e6e3de6c5085f31ed4f49273d57cfeae4d69d00a2568c91f54f9"
+    },
+    {
+      "path": "artifacts/tancom/index.html",
+      "sha256": "9b373c702667539e5e8315d6eebfa927cc9be53dd1bf7a80a46448bcb58ab92f"
+    },
+    {
+      "path": "artifacts/tancom/package.json",
+      "sha256": "a79d10991197af3bc3a4c4ff6aaa007033fdac384d95a21502c07946224f75c9"
+    },
+    {
+      "path": "artifacts/tancom/public/apple-touch-icon.png",
+      "sha256": "3f36297a923700fb455135d92a7b298b69ede714f8e8ddd3a3aae9877ed1200e"
+    },
+    {
+      "path": "artifacts/tancom/public/backgrounds/bg-abstract.jpg",
+      "sha256": "c5296a8f88846ebd3ade625f6d91a19f4d2f9e4d13d2640c6cb69ef046408c6c"
+    },
+    {
+      "path": "artifacts/tancom/public/backgrounds/bg-bdit.png",
+      "sha256": "69e0c2ea7e70666607ed1cc3beed504e29cf6f6216dd87334a60410c22b6efa3"
+    },
+    {
+      "path": "artifacts/tancom/public/backgrounds/bg-birds-lake.png",
+      "sha256": "44928830faa442b3f17efeeead8d480e9a808ed912e647d932b3d4196f4cf471"
+    },
+    {
+      "path": "artifacts/tancom/public/backgrounds/bg-flamingo-lake.png",
+      "sha256": "44928830faa442b3f17efeeead8d480e9a808ed912e647d932b3d4196f4cf471"
+    },
+    {
+      "path": "artifacts/tancom/public/backgrounds/bg-greenroom.jpg",
+      "sha256": "dcf30ae23b6cd4e9ec05ed9dda4ca6ae292a0c4a0737a90144a0be0201d74d02"
+    },
+    {
+      "path": "artifacts/tancom/public/backgrounds/bg-livingroom.jpg",
+      "sha256": "51e282f50049bfc55da763a6efd41c4f5ba8c65c12b6004e9cf5d8877886dcee"
+    },
+    {
+      "path": "artifacts/tancom/public/backgrounds/bg-marina.jpg",
+      "sha256": "d1b5a705c39d095d97045b1af859083f811f47a0bc557d3d2992150b8135c3c1"
+    },
+    {
+      "path": "artifacts/tancom/public/backgrounds/bg-river-palms.png",
+      "sha256": "87c94168d6ffc8bd7c5a7aecb596aae53abeac24a6c82b3f4ce438d5dd1adab6"
+    },
+    {
+      "path": "artifacts/tancom/public/backgrounds/bg-river-village.png",
+      "sha256": "87c94168d6ffc8bd7c5a7aecb596aae53abeac24a6c82b3f4ce438d5dd1adab6"
+    },
+    {
+      "path": "artifacts/tancom/public/backgrounds/bg-village-pond.png",
+      "sha256": "865ddaca83d771b8d43834e79a552bd108f6ea1d5011335bfcf59da2ec9ab671"
+    },
+    {
+      "path": "artifacts/tancom/public/favicon.ico",
+      "sha256": "e192192d469384fef3fdad4a1587625b44d751e82101c0298796223f1f113081"
+    },
+    {
+      "path": "artifacts/tancom/public/favicon.svg",
+      "sha256": "00f33cd84716cffcf1e68e27298d0ad970651b5d078b7fef66cbd8914a317fa9"
+    },
+    {
+      "path": "artifacts/tancom/public/icon-192.png",
+      "sha256": "6acc159cbbf24883287356e1a84115a33b2acb0ad83f2c49be3dd546b68eb726"
+    },
+    {
+      "path": "artifacts/tancom/public/icon-512.png",
+      "sha256": "398447a9b582705ac162ca7aa0026dd4d7913f0509f0f4560de02f0dfc58fc13"
+    },
+    {
+      "path": "artifacts/tancom/public/logo.svg",
+      "sha256": "9e951aab15ede769c114e5babd7a39edd8f130e13d140e937cca77461fd52a92"
+    },
+    {
+      "path": "artifacts/tancom/public/manifest.webmanifest",
+      "sha256": "77ae6023792c5761989bf7a1f06c660ffe3879ff8a55fdce21251363bf616b41"
+    },
+    {
+      "path": "artifacts/tancom/public/opengraph.jpg",
+      "sha256": "c290000ca9758e7e68706c659b865bc5539a4b6dc3f438ef7f0a40e212f6c1d4"
+    },
+    {
+      "path": "artifacts/tancom/public/tancom-logo.jpeg",
+      "sha256": "ec6c04f33396226fe3315c57dee9e58aefc1eff3d53e21588a4c5b8c6fe25564"
+    },
+    {
+      "path": "artifacts/tancom/src/App.tsx",
+      "sha256": "0329f3140aaaa27a23c06267165b3791b8dfd2b2490b228de01369e4b0f156e9"
+    },
+    {
+      "path": "artifacts/tancom/src/components/AppLayout.tsx",
+      "sha256": "4cfb6cbfe8a4d2e16bf387f0a1e0a78f2d172c46ed3de65c415b9d0b1b03cb97"
+    },
+    {
+      "path": "artifacts/tancom/src/components/CallModal.tsx",
+      "sha256": "c0de70cb895ae51186bf856d5e2dd6afd99ff20630d88db226e3decac2052a35"
+    },
+    {
+      "path": "artifacts/tancom/src/components/Footer.tsx",
+      "sha256": "1dc2c6c7d59f4bde2feee01f7678b1da651ff94d847767bdad0d0679df59fac6"
+    },
+    {
+      "path": "artifacts/tancom/src/components/IncomingCallBanner.tsx",
+      "sha256": "bdc36b36870c56de1d4098269574297ff150a5728707956fce3d400313fee91c"
+    },
+    {
+      "path": "artifacts/tancom/src/components/JoinMeetingModal.tsx",
+      "sha256": "65a38fdbb34d8bd1c3dd1e9250a9080d6ccaa607f536d39e153b6463916e73a9"
+    },
+    {
+      "path": "artifacts/tancom/src/components/NotificationBell.tsx",
+      "sha256": "673d34abebca62e1bc10282890cb43ee07e42e4675604ca0dbe9bdfdf2b8ccf3"
+    },
+    {
+      "path": "artifacts/tancom/src/components/PhoneCallModal.tsx",
+      "sha256": "2b13d5a10e895cd9868d861f14c7c54da51f219bc0c06dedaf14e182a664acb7"
+    },
+    {
+      "path": "artifacts/tancom/src/components/SmartField.tsx",
+      "sha256": "2227ed8264155094e6a9d7e1917a0846abd678488aacce38344d1282c37f951e"
+    },
+    {
+      "path": "artifacts/tancom/src/components/VerificationGate.tsx",
+      "sha256": "cb1e4d91c8acbc9770421ef3a657e17b25f51a14f2327818f8a50ce83e8f5eca"
+    },
+    {
+      "path": "artifacts/tancom/src/components/VideoSettingsPanel.tsx",
+      "sha256": "ad1b91659144e4391f22bb5791c022a01279538ba6366d8f5a5c9c2e681ed1ec"
+    },
+    {
+      "path": "artifacts/tancom/src/components/VirtualBackgroundPicker.tsx",
+      "sha256": "5e0f74008766dc073f8bc7b5b21c0cdd9b8c9b7baaa5484449a0498e5d5b513c"
+    },
+    {
+      "path": "artifacts/tancom/src/components/room/MeetingPopup.tsx",
+      "sha256": "ee4d6ce4e4a613052d7c0058c8cd50fcbb85cbd7e706e18c1d7fde8405fb1069"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/accordion.tsx",
+      "sha256": "dcbfb3243a26096fc3e5f54039ccb5c4c23d9bb79a4d5846b4be75bf912f07d9"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/alert-dialog.tsx",
+      "sha256": "311bede35f785d7b1ecd7398986757e26409d1049352a94ccf83586b8603c92d"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/alert.tsx",
+      "sha256": "5950ac01377e7eedc94b00eb3fee678745e4cc1a72b5343867f0733d07db6660"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/aspect-ratio.tsx",
+      "sha256": "08b0aa0b05efc573c7d63363c03e83d4b101bfeb54140764e96ddea30659cfcc"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/avatar.tsx",
+      "sha256": "e78b35ed76c67d8ff50603fbe0dfa4fe600097bd860d89e65beea3e16683dad8"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/badge.tsx",
+      "sha256": "3c339f439797dba9b3872a9d89db42420ffd900504b4e0b27e9dad51e87bc41c"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/breadcrumb.tsx",
+      "sha256": "c3d3dcb0d82fc5e91d8830bac7fead905686fe876f1f42c3ed872bb0a6b6584e"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/button-group.tsx",
+      "sha256": "e3716d270e9ef6457b5cd29464ae00194abc8093c08ebf726c9204d7a69231d9"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/button.tsx",
+      "sha256": "9a9edf4fda319623ee228d5cb26ac31dd008dcfd5c57dbafe3b7d768e59e50ca"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/calendar.tsx",
+      "sha256": "4b5d9a734d0a2983be8238c9629a12ce91346092aab129c3088c007015b606fb"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/card.tsx",
+      "sha256": "525c4bb2c051987be64df0e92e1d90174912b219bf541e24ffbc4a3406de49e8"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/carousel.tsx",
+      "sha256": "5a4ff73c804e86c873382da80c453f1399006326ef042fb984c24162ec86666e"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/chart.tsx",
+      "sha256": "b40d1236f168c746b228adec6bc4e9d196ea362a7910878f161d3c359a013b89"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/checkbox.tsx",
+      "sha256": "ac389a574651c8bedffc10f80674c5fc2f02ab81291a5f4ad9c587d1f775fdce"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/collapsible.tsx",
+      "sha256": "f4cdd104de29928bfcd40b865c7d08eed9157a537fbb8b5e6d0921f02b63cc04"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/command.tsx",
+      "sha256": "5a57ebc119f2357b097098d22865d45de8fda623ee88fe98b99999838c13633b"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/context-menu.tsx",
+      "sha256": "5369fc82c51df067aec2934f5e711aaf9e3f745ed7baadd7ba4b77397dee2a1b"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/dialog.tsx",
+      "sha256": "f9c982ed8114c253c6ca738043d3f455e89c6d65569e90c9415776d6b4d6be14"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/drawer.tsx",
+      "sha256": "47ff6248307a4ac09bf7e00181a2a29f9f846691092e04cad03e15d749bc249b"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/dropdown-menu.tsx",
+      "sha256": "dc109123ecd59af01d07aa9f3a8e8a7085bd3f337388c5369799ab1ce6c2d45f"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/empty.tsx",
+      "sha256": "9f975582a0290dbc7ce6efa3b36b376a4c3f07863026c3b74c1e73cb0023acb8"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/field.tsx",
+      "sha256": "e463611ab049c5e9b1c61691d239e05970ead7b577a191b3f80aa6f8ffccada9"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/form.tsx",
+      "sha256": "d50adf86568f76246f0f319c9e1e858627475563f6c1e38f5df7d4ee23958559"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/hover-card.tsx",
+      "sha256": "00f9086b1412843e04e01d31d2fab00a25d65d789d1a382e41f01b1f3c167c3b"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/input-group.tsx",
+      "sha256": "e9dad28bc940ca29714312d6c75d83bfe63f0cf7f9a384d2a2969a00a1d79700"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/input-otp.tsx",
+      "sha256": "7c4799e3597f2780c09a39a1391b921fa16eaedd0476457492af734f58e2ec98"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/input.tsx",
+      "sha256": "d6604e2ba4272217641f97027ffa843bf252ecb601bcfe1d7a0c774cb7493045"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/item.tsx",
+      "sha256": "90983640aa7cfef8217422347d8e14825cf55137c76369decacf440767f03188"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/kbd.tsx",
+      "sha256": "0c025e7736d435f563bfb44105e562629672799eb1f35cbf194148d06cd1a9f7"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/label.tsx",
+      "sha256": "2eac8fbb04002c42b0fbc4062d20d131e421796eaf65c37d2049e29e42ecbc5a"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/menubar.tsx",
+      "sha256": "def61eb2c47c9ec319423471f4ca20045e99549958211cacf832e4ede769e484"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/navigation-menu.tsx",
+      "sha256": "a06d96a582ac207ffcd38445d773c05e841d646efb185b5e9b65f73e5bd388c7"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/pagination.tsx",
+      "sha256": "9506dbd19ddd0c2810d1c9668a3f01606e39d9bf33ddc43329523c03bf629012"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/popover.tsx",
+      "sha256": "04cf38bf94abd3fe1b51e90227e6e235ca74776f6fc6af718bfc149e7424f582"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/progress.tsx",
+      "sha256": "6b3b4b69a1cb361076174892e9a96e1a09020307616965ef89f2f7e2495b57a9"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/radio-group.tsx",
+      "sha256": "9ba7808b7404cdf2159c81883a39290033bc4308f2978eb80797c92b87421301"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/resizable.tsx",
+      "sha256": "70d1e35a5fb0897af7063cdd841d8ed636e1c332ef7ea6469f0f175a5a93dddf"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/scroll-area.tsx",
+      "sha256": "d7d02600effca55d0dcadce8c09c97ebddda3a19c5fa1d52dc9f6f727b26c6b1"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/select.tsx",
+      "sha256": "3d93ae07a8f3fe121ba60f4439e26bd7859f247eb8bfcafcf4b4a8a069888eec"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/separator.tsx",
+      "sha256": "c956c4cca4b8442fa9314d6079b9f975e1ee39d5804aaf2966990f6258ac342a"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/sheet.tsx",
+      "sha256": "363f8e06aa5b53c6475f445117f60fa9294be79e9e4f1f5bf70886800188124e"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/sidebar.tsx",
+      "sha256": "b023ff6245be1930e152a18c6aaa2b6dd1a11df7b05fcf41bbe483968bfb1c39"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/skeleton.tsx",
+      "sha256": "87608e7cc815ad3d88e0b9de6c402bb37b58ea1b38636cf69709da1baff6e334"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/slider.tsx",
+      "sha256": "234e38fef59169bd02d8f5b56ca02e5ec13a0bd6846c328927b924e1299f7fb0"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/sonner.tsx",
+      "sha256": "771ab8637d27384c3ed030ba3be01a07b90c791c294eae06646250f8e81bc49e"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/spinner.tsx",
+      "sha256": "acc076520ebc11e03d5fe2845098624f0dc3af8b96104d5ae3ebe4dab9edcd7d"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/switch.tsx",
+      "sha256": "ba5867cd3145af1290edd80bb56d4b6d61c6331aa8ef96ae0b85487f4499feaf"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/table.tsx",
+      "sha256": "a4a6972c2d47d465d7f02c1dc4a6cbfeda7a97e46479c1b0cebdaf26bf9b497a"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/tabs.tsx",
+      "sha256": "6f74706bc6b53f9e4bcebb5e7ab8743b616aef181edc7758b8ee905f9b2fdcd7"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/textarea.tsx",
+      "sha256": "fa3d462c280655be75b9c94ba7480df76c41a29aa8a24303dab478ff09c41254"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/toast.tsx",
+      "sha256": "99f9f4a3e897f71d89b01c6772b2f5db51b888cecb2c8214fb2c2dbb2b3e6356"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/toaster.tsx",
+      "sha256": "1348f1a1f9820e2f1394b93cecc156a7e22f03636ab9270753985549aae2be74"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/toggle-group.tsx",
+      "sha256": "dba95ead40d163af6959198ded9853a2cc9282b2cb534980f99937a65edf4e2d"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/toggle.tsx",
+      "sha256": "955fa1bb97505b7a8bba3f7cff1991035a9afa0e1113f5d598147e6369dbf44b"
+    },
+    {
+      "path": "artifacts/tancom/src/components/ui/tooltip.tsx",
+      "sha256": "ce6afa34fb9dae51053a863b4c3f7c6e55f3da23b00149f31a8e4402bc963be0"
+    },
+    {
+      "path": "artifacts/tancom/src/electron.d.ts",
+      "sha256": "3a5a2c9d94945cf262c94a4986943d11d01653faee6c541bfe6bc57454762d4b"
+    },
+    {
+      "path": "artifacts/tancom/src/hooks/use-mobile.tsx",
+      "sha256": "ad0936f84f1df79d3697bfbff9c18f8ad58431c1cbaf2359c6a853b0fcc9f28b"
+    },
+    {
+      "path": "artifacts/tancom/src/hooks/use-toast.ts",
+      "sha256": "5aab0623ee24bddf9420c259a23a06996292e38ea70eccbac2715516f6d01a0b"
+    },
+    {
+      "path": "artifacts/tancom/src/hooks/useCaptions.ts",
+      "sha256": "9514b85661ef14ce9564869557e094557124bcb75a588cb06e73b0066e27d64b"
+    },
+    {
+      "path": "artifacts/tancom/src/hooks/useLiveKit.ts",
+      "sha256": "db45a285833a7e8250c8998063ecb3869d8666b7ea736928271ca13e58acdd63"
+    },
+    {
+      "path": "artifacts/tancom/src/hooks/useOwnerRole.ts",
+      "sha256": "e04ff4d8fbdd3eebbcbbda7074cd841f6a3058dfeab0a30e7c094972a071196b"
+    },
+    {
+      "path": "artifacts/tancom/src/hooks/useSessionTracking.ts",
+      "sha256": "743b40d47c7d3399a67c00f35197ecd6185ce850992740dbf51772d393938261"
+    },
+    {
+      "path": "artifacts/tancom/src/hooks/useSpeechDictation.ts",
+      "sha256": "1cb2b3e6295fce425d2161bde01e5c8317164fd2778ef5fe20a8f26c57863b5f"
+    },
+    {
+      "path": "artifacts/tancom/src/hooks/useVideoEnhancement.ts",
+      "sha256": "247ee8d2505e71f3d490271f267c267abc9038872dd7ce8374de542743376233"
+    },
+    {
+      "path": "artifacts/tancom/src/hooks/useVirtualBackground.ts",
+      "sha256": "c5c4f11161c8e1d4e091a195b2ae77841d9b17d3bc47eff5250fe70701919138"
+    },
+    {
+      "path": "artifacts/tancom/src/hooks/useWebRTC.ts",
+      "sha256": "09a4a3e78f9ce60bf7a226e055ea84e7dc946714d070bb22f4b59a8adc6a10fc"
+    },
+    {
+      "path": "artifacts/tancom/src/index.css",
+      "sha256": "045fe5a1ea240e6f8884a757dbbd985311a0253a95329cd3fc0693e684710778"
+    },
+    {
+      "path": "artifacts/tancom/src/lib/cameraStore.ts",
+      "sha256": "b915935e20660e8d0f9742624b098e292c04822b9b8576e0cb1993bcebd2a129"
+    },
+    {
+      "path": "artifacts/tancom/src/lib/downloadManual.ts",
+      "sha256": "6f1969d5594fb7642b61558b15e0a4c6d16fb256e43817aee520aa1861cb84bb"
+    },
+    {
+      "path": "artifacts/tancom/src/lib/e2ee.ts",
+      "sha256": "4f2a34b2f593fe07fccc11bd447ed00e7ae67a05876b767b2977ba1ef24583f3"
+    },
+    {
+      "path": "artifacts/tancom/src/lib/queryClient.ts",
+      "sha256": "eb3266d3ff9c603f85d0d4eacfde7e9db29b4a223c316e362c636d24d7f3da21"
+    },
+    {
+      "path": "artifacts/tancom/src/lib/utils.ts",
+      "sha256": "7c8c3dfc0cdd370d44932828eb067ef771c8fe7996693221d5d4b90af6d54f2d"
+    },
+    {
+      "path": "artifacts/tancom/src/main.tsx",
+      "sha256": "29946f51942fba11605c7595fd82b50b0d7e50148e0194fd356dacbc958f18ec"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/Admin.tsx",
+      "sha256": "99ff984d23fbc21e7f62e3db292f1bdf5eba0478784340ac7fdec3bd9f137cd4"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/BusinessTools.tsx",
+      "sha256": "7e5aba5adc5966a928f6c64ecddea51277607b0c120d37e80308788f8ab7f0cb"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/Chat.tsx",
+      "sha256": "8f8df8cb8ac61fcb87fc1c285b956110233783f2be792298960bbe9a28cde5e4"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/Communities.tsx",
+      "sha256": "26c6f3a82172e53357ca7d3016846d9d09ef3c15bcc6dbfc85c69d2950cd56bc"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/ContactUs.tsx",
+      "sha256": "a4d404358bda1e0a6a4e12e2c3edf6fbb65f120de473aafb7df8e02349a35ef3"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/Contacts.tsx",
+      "sha256": "d2cfde00478420921425469806790f68e125ff7a76a1646163b6e89d6a82c8a7"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/CookiePolicy.tsx",
+      "sha256": "f210185f83057e5ba7bc01a8814b48b739ca7d5a9caba579d71b3055466447e0"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/Dashboard.tsx",
+      "sha256": "d69e74f34ab8f70175b379b2385c79e96358545576c549a4c84aa51f3b47a97b"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/Download.tsx",
+      "sha256": "e4cd40f2e0bb12df3aa02424db3460c0d2935443b5f7b1176e452b9e4c8fe192"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/Groups.tsx",
+      "sha256": "eb010e0a31a86ad41aa37397a854ac17c1dae85754d5093cea07e134e8cd812c"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/JoinGroup.tsx",
+      "sha256": "378742a78aaf9b56e4dca7587dbb88315ae5b69e192f0c2dd8578dbbc6bb8e4a"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/Landing.tsx",
+      "sha256": "1b4e4f0c3962a58f4620cac08d22ad98814c8c5243ae6b2e4ff73d16d30850ad"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/LiveDashboard.tsx",
+      "sha256": "4760aa217b1ad3ff45bc56bff3d37e9d105204ca7a124caca802ed27bd2ad383"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/LiveHub.tsx",
+      "sha256": "d5b4941eeefbed050f62cce9a7a4fb974b27466fcb8011b55216d45481340aa5"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/LiveNew.tsx",
+      "sha256": "2aa08dab92201ed11043043014c1e2e5791d83a3a02e06652a4db53165cdfcc8"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/LiveStudio.tsx",
+      "sha256": "a3be9de87bd3b40c8358e23830808790ab9306d3ae834d913e1386b73dd27ea6"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/LiveWatch.tsx",
+      "sha256": "438e3786be36e01542b3db9f2ecb1be6221af4e202bfef363f0fa5fdf684a58e"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/MeetingDetail.tsx",
+      "sha256": "518bce21abe42e10e5fd8190f4a23c63fd85ba18d788ce9969f917640b2a71c9"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/MeetingNotes.tsx",
+      "sha256": "0e0183b6f17aa3d3d5ecd950d66d001f5bfed9e0d3380ce49201580ebb3090b1"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/MeetingRoom.tsx",
+      "sha256": "79362a8ac2b1b00b2316dd3a916102506c562e7390daf9f78aa72a7aec18650b"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/Meetings.tsx",
+      "sha256": "40e016936ff0d5766ce0cbd22938e1beeb36145477ea238cbd37d039974cefbd"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/NewMeeting.tsx",
+      "sha256": "fc390c4d1c6b05bd6d4649641be564d3c9ebe4ccd5e783d03db22eb02f2c4095"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/Onboarding.tsx",
+      "sha256": "2446a7f98ed045e6b2cea7b9d02eb8995d9d88be90b8aab229e91d16b11a3aff"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/PreJoinLobby.tsx",
+      "sha256": "9a49e8d42d8932c8cda36b411cc39cf2f614af5a0e4c131e6f73e61f148e6e1e"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/PrivacyPolicy.tsx",
+      "sha256": "a70374e2c15fbd8a5a47df4c9a5a3c35f51c2b4c47b54e3abda9b62cfd82e304"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/ProductOwnerDashboard.tsx",
+      "sha256": "3f4454aa2c1ee5ab3b052c76996bf9ce2b8cc51ef658283fb27a82ac9760cd64"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/Profile.tsx",
+      "sha256": "2546f5c7a57fb5b656357e429ad89b771ac85328a2d3d6234ce48cfda3343594"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/Recordings.tsx",
+      "sha256": "2ed18aa8d0441a6d2cab28a5b5d68e46d203f117f59a8219f03b826f0517ae36"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/RemoteAccess.tsx",
+      "sha256": "5f8b654a37173512bd11cb50e4691a2c4619d545b563246ce3daa298712a336c"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/Settings.tsx",
+      "sha256": "8ca0a88d4fbcb1f004fa8500f46421e39cce9294f2801a59838dd261ccf55756"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/TermsOfService.tsx",
+      "sha256": "88fd9c6683e63702c939cb50c1731fe04529a53b9ce15c5bc3da59267f818cf9"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/UserManual.tsx",
+      "sha256": "c30404a5d30d7b28e8d145a693a9ad26b089aff97688a9cc0ec6f41bb09e456f"
+    },
+    {
+      "path": "artifacts/tancom/src/pages/not-found.tsx",
+      "sha256": "718a41bd05a163d1db32480aba013f5fe754894e656b6542a8e4b302275b172e"
+    },
+    {
+      "path": "artifacts/tancom/tsconfig.json",
+      "sha256": "66fcfe7c4ba97dd8477782687a11a03eb93e03fab76d959c7f8e5a6a88101f8b"
+    },
+    {
+      "path": "artifacts/tancom/vite.config.ts",
+      "sha256": "c02ed2c0aba6e690e374605d7ccb9868c406aac052607171266ce4f3c5aac9bd"
+    },
+    {
+      "path": "attached_assets/TanCom_Logo_1780923314837.jpeg",
+      "sha256": "ec6c04f33396226fe3315c57dee9e58aefc1eff3d53e21588a4c5b8c6fe25564"
+    },
+    {
+      "path": "attached_assets/manual-cover-portrait.png",
+      "sha256": "558d1da4dff6158c84f98ccda0bfa2b52d29b020967e8f3dcdfa06ee65822063"
+    },
+    {
+      "path": "attached_assets/participants/alex-chen.png",
+      "sha256": "4d9f2cfa1f8854054a63f2b040f9ce102411726c69f610fbf59f892ec92b2d4c"
+    },
+    {
+      "path": "attached_assets/participants/chris-kim.png",
+      "sha256": "dda4070ac123119941cb2795b6d9ea0fd9e467362f281e73977246eb9e2e0b52"
+    },
+    {
+      "path": "attached_assets/participants/jamie-park.png",
+      "sha256": "3805005ecad4e334b8ead656e09d305b924b558550068d0bd00df83ea449542e"
+    },
+    {
+      "path": "attached_assets/participants/morgan-lee.png",
+      "sha256": "f8c19e442e3c4bad963f52452ca690bd0c2c209de334d1e9b160badeef6016f7"
+    },
+    {
+      "path": "attached_assets/participants/sam-rivera.png",
+      "sha256": "a558fe20d675cdaf67ad85541cebcd3572aa81b6783d114163124d241490d9c5"
+    },
+    {
+      "path": "attached_assets/participants/taylor-wong.png",
+      "sha256": "e3057978a077157e9ebfa4f7cde4a1c4d253bfe123371d8d04104c32120bd840"
+    },
+    {
+      "path": "docs/communities-user-manual.md",
+      "sha256": "8509df2991386aab2aa6f5759eb100ec03c2d4f52ab7940089bf574a29a7de3f"
+    },
+    {
+      "path": "docs/security/clerk-trust-review/README.md",
+      "sha256": "040b90e05aa9132ae15f21c699c7eb0fbccdcd50c554ab43957c45e6fd76df64"
+    },
+    {
+      "path": "docs/security/clerk-trust-review/compatibility.test.mjs",
+      "sha256": "c4121316c9c1ac26246aee22fc4e3ed3f1a937b4ef547ea890340bcdc33dab45"
+    },
+    {
+      "path": "docs/security/clerk-trust-review/proposed-policy.mjs",
+      "sha256": "f17486510a378057263ba0004824e600922fb13f2caf8d1e8f80257cee6f5960"
+    },
+    {
+      "path": "isolated-testing/backend/safety.mjs",
+      "sha256": "b1e390ba4d480b63441d916b8dc75ad531e1f94a5ad9823850a65a91169ecba5"
+    },
+    {
+      "path": "isolated-testing/backend/verify-session.mjs",
+      "sha256": "943631cb250ced1d6e39c409baf118abbce8eb72d0fa1aeffc169a0cc19ef29b"
+    },
+    {
+      "path": "lib/api-client-react/package.json",
+      "sha256": "ae70f97a12d1f7e7cbb291b5ffd1d6893f0d7a0ff7721a21e615d47bccfad789"
+    },
+    {
+      "path": "lib/api-client-react/src/custom-fetch.ts",
+      "sha256": "3a5605ea89571cca7ea9412a230a40954e3a3f1d94d7a566271480165bf5e03c"
+    },
+    {
+      "path": "lib/api-client-react/src/generated/api.schemas.ts",
+      "sha256": "664ace5fb4895aea7b87e33cb1bf2a346cdc96688dec1782a18e0115940f047f"
+    },
+    {
+      "path": "lib/api-client-react/src/generated/api.ts",
+      "sha256": "c90bbe46862a7f8c605b3d40c91781d0df8e2a08490e01d1f9f31e17f52c1c5a"
+    },
+    {
+      "path": "lib/api-client-react/src/index.ts",
+      "sha256": "7974b36e3973a8d0c403589bcf8d8aca7547c5c42c4b73924d05f49de18809e5"
+    },
+    {
+      "path": "lib/api-client-react/tsconfig.json",
+      "sha256": "7e9d09ae244912d5d1add40373fc8dfb98200e903c0994aba4faee4a5afc3489"
+    },
+    {
+      "path": "lib/api-spec/openapi.yaml",
+      "sha256": "006e1a0759c323787c8faed05b32bcf9aa9eac57dde264e2e99243d9b8c17c0e"
+    },
+    {
+      "path": "lib/api-spec/orval.config.ts",
+      "sha256": "9f90e6a59cbea54853c714932f8fc87cead1224a3ab1066fd825aeaefde2aa4c"
+    },
+    {
+      "path": "lib/api-spec/package.json",
+      "sha256": "adc64129023ad84347f090a79fbc5b8cafc4741de22819099e8f818d557d12bf"
+    },
+    {
+      "path": "lib/api-zod/package.json",
+      "sha256": "07009861b2ba8decccb4e9d78d743cb7273bd91915231b5eb1463b296efca13e"
+    },
+    {
+      "path": "lib/api-zod/src/generated/api.ts",
+      "sha256": "5e42ee594319a1454335d784fbd55acbcbf348646c90809d19f03592233b3f12"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/activityItem.ts",
+      "sha256": "3978cefdade95be630b1f5ad600b64765736007c147c8b82f238d7ed3ba47a3c"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/activityItemType.ts",
+      "sha256": "742610e8aa4ebd7140e1cc3b7146658c53c759b5f51c6d8837830cbc073f056c"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/addGroupMemberBody.ts",
+      "sha256": "afdf0f2852696626475005e49a156f41d06f9e0129950c4f43ed106241d1a9cb"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/adminAnalytics.ts",
+      "sha256": "0f2f940c328366e7903b2e5c539d663e4eaf0874852d9a37ff92591d2d8f01e1"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/adminAnalyticsMeetingsByDayItem.ts",
+      "sha256": "7baaf3bd672439d0240aba1c3905308ad24baef149eefcef0d859a5ee906801e"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/adminAnalyticsRegistrationsByDayItem.ts",
+      "sha256": "02f93b590e68eb0df0d2ea4c49a4d732925c34d4935120d0bb09ed4c02de886d"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/adminListMeetingsParams.ts",
+      "sha256": "52e80e71781d8e53840525fc7a1f4c50731efc2802f928b29a160f8b8f5cba00"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/adminListUsersParams.ts",
+      "sha256": "6958741ea86e3c202b6a693a4448267f03b402fbc427c2c8cd5950279ea8f0a5"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/adminSessionAnalytics.ts",
+      "sha256": "1e4b1309e8e0a6ce8eb6a648146cc549b488188ece40b34ef38d8b4deba9aa8a"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/adminSessionAnalyticsLoginMinutesByDayItem.ts",
+      "sha256": "9ba22b660f9853e46f94ad764cfb74a81f4bc11d0c73cd5a15d628dc7651b8b3"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/adminSessionAnalyticsTopUsersByTimeItem.ts",
+      "sha256": "7212b65b68b5aa87f7813f3c7898e24c5e1f05e8235e3b8f6c98e562efacb040"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/adminUpdateUserBody.ts",
+      "sha256": "a6d5fd176e89dc5a9471b0908a0f9ef1ab1c59cd6b41f35df27fba11014ffd1e"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/adminUpdateUserBodyRole.ts",
+      "sha256": "eb7fbb19fb7f994e1a75b79a837496ffd7ec7505544b3a49c5c8f7be530b2bde"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/adminUser.ts",
+      "sha256": "4868081743a27b1b64de7db32bd640161131d42a5b1d9d838ff24cf7b5291ffe"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/adminUserRole.ts",
+      "sha256": "2057c901cc89f70809e57d99663172ee7ae63538cff774fa6a3e403857ffdb6b"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/chatMessageItem.ts",
+      "sha256": "826ada2516eb47d4bd6844604f118e85b1e876aabd8ff057a7e76567bb752c70"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/chatRoomMember.ts",
+      "sha256": "1d93153c6c907093b02c8d602765f7b8fc26c12483829dd7fa7cfe62a13ce81c"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/chatRoomSummary.ts",
+      "sha256": "46354494ab281a7b616d02b58b08aad1a5f98287d3107112ffdde4417d7a56d8"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/chatRoomSummaryType.ts",
+      "sha256": "e00da7534cf5a8372d02f08320d77cc526555e13f73e12639d92e402ea9e89c6"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/checkUsernameAvailable200.ts",
+      "sha256": "fb0d461fdfdfb25f29d3c07b1ca63916114f2d8b94547b5d29eb2ea8b6c7083b"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/checkUsernameAvailableParams.ts",
+      "sha256": "d6dfd130887ef02c3fe5028ce8f06f9a9bbfdff6cba17ae4053b19500306c556"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/contact.ts",
+      "sha256": "d3c83ecf555327830d88769d8dbc3f2fa476766bd916b55384075ee0cdb45b07"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/contactCardInput.ts",
+      "sha256": "e8e275700acbeb64cfff50f7215096dc067f97a5b1d39b05bc4161594641358a"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/contactProfileResponse.ts",
+      "sha256": "b52600f268b6db08592fb73677db7875bae07e9e7b31e48d88614b1a9f0b55a7"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/contactProfileResponseProfile.ts",
+      "sha256": "0ee12216f71557c5f0006764f14a995a6fc90e75395fb76b529e628b97c8374b"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/createChatRoomBody.ts",
+      "sha256": "fa5cdfd00281daff8a2664c5223503127ce5bc9de968c28027b819dbb3046db8"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/createChatRoomBodyType.ts",
+      "sha256": "4cde3dc6e1f18c64bcb29776cbf4bc82b23f0ffb88e0076f0d0298820ebb4405"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/createContactBody.ts",
+      "sha256": "d0ddaf6a3b4279fae348e2204b30c74bba714f625d239895058ac1965cbe26c1"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/createGroupBody.ts",
+      "sha256": "0a0bfb863e696f9daa6f25701909315dbf310cd33bc0768e9cf2027f9ded5211"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/createGroupPostBody.ts",
+      "sha256": "7bd4ed80801cf13752c5639e33e30f010a755db8482c0ce70e9c3fbe86a0112e"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/createGroupPostReplyBody.ts",
+      "sha256": "e20bab171ccecd1ffa8d4518979db20a8be8c4c95177557e013fa1b013233e5e"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/createLiveStreamBody.ts",
+      "sha256": "6a4e0babcb36087ca6478498ebf8131b919e78a76d710a25c85c2b168ca55766"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/createLiveStreamBodyPrivacy.ts",
+      "sha256": "07155f4a4e003a065b2cdfba56af8ace7272f444ec0eeda495444badcb31df51"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/createMeetingBody.ts",
+      "sha256": "7b7a7750b64ca153b52dd2d0ad74a3284a888b1aa647d96688ac5e57ea190f73"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/createMeetingBodyRecurrencePattern.ts",
+      "sha256": "d4d7ea45efda0d470cdd209453413863aff1f8a1b262b749919f61869d2c00e6"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/createMeetingBodyType.ts",
+      "sha256": "d778b4d5a280b8ec9cb7f21699cac4907e0b220e858ba280cae333acc4ce9b8c"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/createMeetingNoteBody.ts",
+      "sha256": "acda22d1d845e0c3bfe7bbe628fb9af2f0b6bc896e5fe25cd239f7b2f08eed37"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/createMeetingNoteBodyNoteType.ts",
+      "sha256": "33e4e30c0f2587f9608139011c0ab8ef22223c36326b32b512fd4a6a8bb3ce64"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/createRecordingBody.ts",
+      "sha256": "6a42354d62802cf78d8d1ace233ccbb979cb023f7b31ebc60dc8bb6f9a3eb3b5"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/dashboardSummary.ts",
+      "sha256": "a8f89f9dbebc72c30cfd71de59d95ff34f15e6b7686c9df63e9bba6ecb9887f2"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/e2EKeyBundle.ts",
+      "sha256": "d1137ec2a092e1e23d86920c5e55150dbf785fd29c59f4c55fd80d851dff8035"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/e2EKeyBundleInput.ts",
+      "sha256": "576cfbcffc9e614908a32b5ca6b13cf1f194da8405e2217591de0327ad735de1"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/endSessionBody.ts",
+      "sha256": "9a94eed9d08288041450e348a8782f8b739b4bb321429f4d11dd35f8c6f52c7f"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/errorEnvelope.ts",
+      "sha256": "a91977eb86d358ad09b2fa8eadbf87e0c57b65f0f4ccd88f72aa24bdf8046dae"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/errorResponse.ts",
+      "sha256": "8d725f9925b75b468098ff155e7d44dc6e0121b29df7bef48720feb8e9acae66"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/exportMeetingNotes200.ts",
+      "sha256": "5c55636439d9de83b4cac523ad6121e2c33e3be09e1d403640b98086fef37b17"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/followResult.ts",
+      "sha256": "8d679bf5acb03ef6a6d54ff758eedb620aa1c533437c846a30c4b789b1b4fb83"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/followedStreamer.ts",
+      "sha256": "2bf35b330b933d9ea74e1d0b6084e10c6248706d2b10b23a8cbb440777838484"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/followersResult.ts",
+      "sha256": "30d0b8ba97d0ee1c2493389b8f2b7b889581754a8e787e806eaf26a8579e7242"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/followersResultFollowersItem.ts",
+      "sha256": "c569808322307a8429f8d68b2bc45aa111a0692a5bfbf67fea1c9fd59d88112c"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/goLiveResult.ts",
+      "sha256": "88afffbf20c6f95c296e03516de7a4b9e85a85db85c5264569d69c8b6ccd1f1d"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/group.ts",
+      "sha256": "353be527ada62f81f74e2fbbcfd42667a08b4ea1de4dc0b544026462dcfcd615"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupInvitation.ts",
+      "sha256": "465a556aa6133ccde8390d307ee5111e71451f3c5590f80a3e748d6c5c9b179a"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupInvitationStatus.ts",
+      "sha256": "ee704bfb2fe2a3e22722f0c4f78e28863a13bdd219e475399067709fb0437527"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupInviteLink.ts",
+      "sha256": "d527a8ff4d571459e025b7e0cba902567457229efe18739e211034e071314505"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupJoinInfo.ts",
+      "sha256": "2ead4e971d79480051c4aace44c91b6f3b3660cdea48e85223ad0289c6b118be"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupJoinRequest.ts",
+      "sha256": "2bdc3b0a6ff211c3e22579c7df6253aff23ea87a1e88f5fc9237cff8f1add758"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupJoinRequestResult.ts",
+      "sha256": "95efd632f4651a0bdc18f990f90d8741fdff760a75ee72401f11cc8b8b8748ab"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupJoinRequestResultStatus.ts",
+      "sha256": "0745d4a8af8ae9f036c999b464a88bc70ebc1bd2be36785e16338701f15f52a3"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupJoinRequestStatus.ts",
+      "sha256": "6ebae6cf64988fe82d3575414fb81bfc265300067f80afe9f40f0e3412c49238"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupJoinResult.ts",
+      "sha256": "627e6db18cd826a1344c7374caf0f39ec10b302b8bec05f260696a65afd8c139"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupJoinResultStatus.ts",
+      "sha256": "da4f33a644a86abe72d63a3f38ebaee867d42114394b84533f54258288e6115c"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupMember.ts",
+      "sha256": "5411d131335aef23dc432d35b828d0c398891e8d29706b60e0f7b1a6a4d669e7"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupMemberInvitationStatus.ts",
+      "sha256": "ba2af28fd7eadcb6927ec63b3113f3d685c5a36ce30e59e9f0e40675f7c25ffd"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupMemberMemberRole.ts",
+      "sha256": "7267b2843fa5c0bfd74a090dab1542d8d330390db1e30af37e5f0c5f062df4e3"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupMemberPresence.ts",
+      "sha256": "673227f1a6e3d8fe5274d8f7756372df3363c535f5bfd6b4dda40c7ce8bc7d0f"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupMemberPresenceStatus.ts",
+      "sha256": "c3d0524efa7a1cfe97db6b9420db09a98401db9f3509484927669b7312fa0923"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupPost.ts",
+      "sha256": "a28eab6dd47f466ebff3ebae3b683a6a803d25fc40b2961d2e460ac61876ffed"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupPostReactionSummary.ts",
+      "sha256": "29b42bcefcffc310535f6ad02e0f18419b33a905d090a4985075fb09c26e04d0"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupPostReply.ts",
+      "sha256": "90a1ca74061acf0499d6e212de3d9c44713b70df5cdce772b641501c1ae2832e"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupPostSeenByEntry.ts",
+      "sha256": "d0d4ca396b2dc58c8761dc9e47f4a0dd237d83dfadec597da18f560349b6b619"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/groupRole.ts",
+      "sha256": "92b930897bdb14c8ab320d5fa667ff65c33cbf9cfbdc607922b34f18f7c0c2b9"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/healthStatus.ts",
+      "sha256": "e05c581979fedb5e46184d0785d2c5b51d1160f38c3e2e012a16a5e4858aa54c"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/index.ts",
+      "sha256": "adb2452bfb99c5d9899b5c2a2a923fceb5f422ad2579ae25a88cae5464734793"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/inviteGroupBody.ts",
+      "sha256": "33098d4453a5c0d765bec69d30ce67021810025f35df2a30008f699bf39980b2"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/inviteGroupToMeeting200.ts",
+      "sha256": "95930cafd7f52c42d987c4f3c2dba1cfed35999daff5f7bf8c7905693bd13786"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/joinMeetingBody.ts",
+      "sha256": "5956ee2da27d2c8aee99ab6c08892069c938a466f6091ec8c09f7f6639ef2467"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/listChatMessagesParams.ts",
+      "sha256": "544304b48c202fc8636ff92cc484e91c0a919c842e22b2c66ea7fae2d781abba"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/listLiveStreamsParams.ts",
+      "sha256": "a7c2be500c7fa0da3dba5572845c83261e6c6bf669f102cb33cdadadced0b820"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/listLiveStreamsStatus.ts",
+      "sha256": "7c79d887e5158204241697d4ecc39fb53ef9283c7a4ad40a51a8ff8f4e7e1b7f"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/listMeetingsParams.ts",
+      "sha256": "6c7fe77dc0ccfa7a6f77a7e814a858ba9cf16f8a21b109efe2f0121f2e446384"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/listMeetingsType.ts",
+      "sha256": "7ced7c422fb451c36d5b48e0c780ee69f91ac8cb045e41c56f32bfa9eb42b8e6"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/liveStream.ts",
+      "sha256": "bb0f51d15b3b6abcc30cf544bca59da42510955db611ced6d203ca6081eb9f69"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/liveStreamPrivacy.ts",
+      "sha256": "1e3fac26d0349c9facc6e7e0b8255d927aba7d4dc606d2ce284fa65d3e54813c"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/liveStreamStatus.ts",
+      "sha256": "f02d913536b1c4c693102fb1d94358b8ef7fab3d2a67dd318439e06d4e0cea43"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/liveStreamToken.ts",
+      "sha256": "e61883acaedc5dc24938c0b8fa70d8100ae05fbed8841388966d4fa9b28fa67b"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/lockMeetingBody.ts",
+      "sha256": "8a4d5cff5599c2fc8edb44dc2c54d8bb78842858008a666dd8bd9fac842719be"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/meeting.ts",
+      "sha256": "d50b27bee3740ddd8866027a17de91613d2d63fc6f0146e90a739e7bf5c2e298"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/meetingNote.ts",
+      "sha256": "a98c0db550e9db1e0e3144060459d41dcc8e4dc6c244bac4d65444671476d444"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/meetingNoteNoteType.ts",
+      "sha256": "5a6cdd22b54658effe4aad03b2ba2fc6c3dbe5a97a520399b60a37ac30fd7c6c"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/meetingRecurrencePattern.ts",
+      "sha256": "10e9fa1a4de9fe79aade330cdd559c3c8002c82a4033f139bcba91bf21d08c5e"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/meetingStatus.ts",
+      "sha256": "125dcda0bfb1c94264b1eb0ee4cac66630ed86eed9a5ca147cfb7a7a4af2de93"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/meetingSummary.ts",
+      "sha256": "267bb2181483ef67875abd180adfa0d3eeb45b1097fe5a1b270f28b556419e40"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/meetingType.ts",
+      "sha256": "df3e236439c93e4e4fa456c8269002d5849dfc9d9d1f7b9d2367dc3275ca671a"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/memberPublicKey.ts",
+      "sha256": "6706ddfe90dd2e24ce1a66a4bd1c2f186a55981925be004212fc8b9e6d4e94ef"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/okResponse.ts",
+      "sha256": "c947dc90a74bbc3ffa7e69925e701e32b692c31b41f60a30c15a8abada268a4f"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/participant.ts",
+      "sha256": "7dd07a36f112eab78934eba29212a2bd18c3d320600eb860dfc726e48b03ac22"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/participantRole.ts",
+      "sha256": "0457fcf25f5b1f0d169deaae50eac650e90998cf7fca11929601acbdc27c000c"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/participantStatus.ts",
+      "sha256": "9c0ecc258651f60a48fa9f25aca07171a1819460a1721c287028da7e0729e11a"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/patchGroupBody.ts",
+      "sha256": "6fcbc8a581accfb4e89bda50520dc04a367ba143238023332b7473d0a9df1505"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/pingSessionBody.ts",
+      "sha256": "cbd759c0e5a009eeb8fd21c5245149dbf70d6432f299e9220fe46dc38f1f0b07"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/polishNoteText200.ts",
+      "sha256": "76040b1b3479851a4084e5f402fbfce538b5ed3832864b9b4351cd5710908c1a"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/polishNoteTextBody.ts",
+      "sha256": "27963ed95087bc924ebeb361609663359384eb61610ad1ce9f805230931284eb"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/polishNoteTextBodyNoteType.ts",
+      "sha256": "47a29e938cd0432eec19b3ca58212d23968d1bdb94ddd1a3ada6b048ae23d652"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/presenceHeartbeat200.ts",
+      "sha256": "9588bf432ebe93650dcb4321bb74ac5839dcb07e6b41c01d705d945004a00282"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/recording.ts",
+      "sha256": "d5c83ff8731d345dc847e2113c8f2fc56c894d17d8ae6242dadd0dbea0fa7ca1"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/recordingStatus.ts",
+      "sha256": "2b3c2302bb092c3f63c5474775ab900a61b933a09c1d53dc876a4e72c76f891a"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/respondToInvitationBody.ts",
+      "sha256": "b306079283845a33a0f2b88615134ce4e7de1c4f842550bedc5f32022b803a08"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/respondToInvitationBodyAction.ts",
+      "sha256": "9a4b4c2b4b936b436e439f93c5eb1dbfdb95d693d9e9593f219a82cb38d72f37"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/searchUsersParams.ts",
+      "sha256": "527312d49f78cf7344e5bf7748de1cac445b71cdb26a9b0209edd67f3d1b8a8b"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/sendMessageBody.ts",
+      "sha256": "be33a7924187cb2d91c3358fd8d1f2a86dcc0755c2d13b3e2ec3db845e01387f"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/sendMessageBodyMessageType.ts",
+      "sha256": "03eafb942475f75a36f2a1cadd3060fb1939bf16c107c92d264e632fee761709"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/setChatRoomArchived200.ts",
+      "sha256": "f55de6545eb82fdd767b703df2673db1d27d052c504cff92a77930fc091e7f4b"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/setChatRoomArchivedBody.ts",
+      "sha256": "50a35340d6084789e2de3e5a368e2f29b91b62ffbc6b2357428be81b1d39dff4"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/startSession200.ts",
+      "sha256": "0e667a3f760a75fd19db044675fb3e1e5fdee15fdeb785e2ce3c86bd5841d448"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/successResponse.ts",
+      "sha256": "cbfbb894a2ed0a66b0a2538dd7c59ba2541f1c4727292ed40682c995292fa5af"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/toggleGroupPostReactionBody.ts",
+      "sha256": "362cb423333017140855564cd9f3bfdc1a967b417f3aebe8c9790c19453af935"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/updateContactBody.ts",
+      "sha256": "521b7b1e043636971d3c39b100b97a0b6a46cb7ac7bf19f0889cd7fa4f87f41b"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/updateGroupMemberBody.ts",
+      "sha256": "aebe56a8a8a0f11cf988a46fc83fc72b364a95bc6e6ec1093aac5221ad3ca0b5"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/updateGroupMemberBodyRole.ts",
+      "sha256": "5996c955033f14ddd089aba142366728878461393a65dfa9bf352e9d6e787f5c"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/updateLiveStreamBody.ts",
+      "sha256": "09e1a9ef2ac50bd1ba2b595fc132866ff60fef2fc31e246025b8aa940607286a"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/updateLiveStreamBodyPrivacy.ts",
+      "sha256": "7b36da07e79ce5e68e9a8e0af399c312a5dc1956fc515ace8c3de4349c1208d5"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/updateMeetingBody.ts",
+      "sha256": "0be0d5f494ffe590667f0f662ceeea0263c78d2038462d5abd993aad86b245fa"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/updateMeetingBodyStatus.ts",
+      "sha256": "dacc56140d30ca9bf32c5dbe9ab523223c803ef6617dd8c1061776d02853765f"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/updateMeetingNoteBody.ts",
+      "sha256": "dcecb6928a549bd43263fef775b593c568a47790d07c16cad98aff14545d442d"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/updateMeetingNoteBodyNoteType.ts",
+      "sha256": "2bd37512fb39c609ba4a8df5cea4d72ec20c5f09c3c631b65e70811ba41cccee"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/updateMemberPermissionsBody.ts",
+      "sha256": "d7bb1036207e1a82fe605e8533c7e1b00d368e3aeabab9ef9960f2320e27e237"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/updateParticipantBody.ts",
+      "sha256": "572c304a22764ea317b7794d53938f74a98f8e10f6a435026e022204facd4e8d"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/updateParticipantBodyRole.ts",
+      "sha256": "f23ef684878cd734454372426a551f8fcce1a5fc85f414e74a8b436bbe37c0a3"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/updateParticipantBodyStatus.ts",
+      "sha256": "2635f3bdb7a81e87f86d517351224cc0582ede07a044a0fd64031823280362c7"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/updatePublicKeyBody.ts",
+      "sha256": "146d74770d84b45fd28699ce282505474677e8648160568847f308250dbdb2a6"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/uploadUrlRequest.ts",
+      "sha256": "4fea0e7d01134b9110cb6767b453c7588065b6d0811c347662ae20d7f463a5eb"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/uploadUrlResponse.ts",
+      "sha256": "7b39a82c4937ff98b0b813383d042db882dcee9b971ee8b77a8bd09b398a0d10"
+    },
+    {
+      "path": "lib/api-zod/src/generated/types/userSearchResult.ts",
+      "sha256": "176e1f7ebc0a80d8fba6d5383ac7907d6b4b0e4226ffd7f2a391d8149e3f8162"
+    },
+    {
+      "path": "lib/api-zod/src/index.ts",
+      "sha256": "5c9e0525f7aa993c9f8adad9637a3f50b781259debba890811c9060f6430754d"
+    },
+    {
+      "path": "lib/api-zod/tsconfig.json",
+      "sha256": "bb52c0e8b13e658570a208d946cb874fdf2b8d990f7c228f96fb24254c9c5a95"
+    },
+    {
+      "path": "lib/db/drizzle.config.ts",
+      "sha256": "57862221556f24a1accd28b283876930c403ad7c86b79d87cfb5c9c200ba6258"
+    },
+    {
+      "path": "lib/db/migrate.mjs",
+      "sha256": "220429facff9493545c41e43b2432765b81a067cd6f8486abb86604dd524d43c"
+    },
+    {
+      "path": "lib/db/migrations/0001_phase2_contact_features.sql",
+      "sha256": "ed06a932c2198a9b6eb0ac6de1b580747a34ca57ea47886940545c466016688e"
+    },
+    {
+      "path": "lib/db/migrations/0002_call_log.sql",
+      "sha256": "849202a9f838d204228ecaefc3a34e21054ef3bde190178ea785a6a35c2c5833"
+    },
+    {
+      "path": "lib/db/migrations/0002_group_foundation.sql",
+      "sha256": "7d8327b1f0df462421c327f8be0e2b7625b6455995e706000bc1c17ffd056d33"
+    },
+    {
+      "path": "lib/db/package.json",
+      "sha256": "857e890413eb903e209a362215c8bea29d92e72fbbd31d6dd310b16744d6ad58"
+    },
+    {
+      "path": "lib/db/src/index.ts",
+      "sha256": "fc285bc83108137ba57c4c2774a35053e3c25fda1292c3d7a16a57d43dd9679c"
+    },
+    {
+      "path": "lib/db/src/schema/callLog.ts",
+      "sha256": "ec56b4d7398622f0f0f81c932862ec850af2a8e8049ca27f0566a734d295db7c"
+    },
+    {
+      "path": "lib/db/src/schema/chat.ts",
+      "sha256": "2e7e8a4f20dc0ab888e6decc2c08b0af23baa4ebdb0e461e39a1b44f5ea0862c"
+    },
+    {
+      "path": "lib/db/src/schema/chatReactions.ts",
+      "sha256": "18983af346faf7de046e538e7d9936c73459e30e5b4ab655f4f4660e942d1e5d"
+    },
+    {
+      "path": "lib/db/src/schema/communities.ts",
+      "sha256": "81add1a6e416a2411706b6615538fe071d08d85e5bf2376211e0f6e2bd627e94"
+    },
+    {
+      "path": "lib/db/src/schema/contacts.ts",
+      "sha256": "a39ef89cd7e8206b18dfebb2ff504e92277b9897d7e0b71a1de70c64bbfd87d0"
+    },
+    {
+      "path": "lib/db/src/schema/conversations.ts",
+      "sha256": "abbab4045abdeb5f7365d3de891800d47078d3257683b29d5f37b329edf3e2b5"
+    },
+    {
+      "path": "lib/db/src/schema/featureToggles.ts",
+      "sha256": "55bb0b8a2a0db134997005d76dad12ae6542f76371f8918b2f0d561a0e63cf61"
+    },
+    {
+      "path": "lib/db/src/schema/groupPosts.ts",
+      "sha256": "3d94c5c9354b9a44f31661aa9053690b7ecdb72c332f498317aeb2b48ca1b30a"
+    },
+    {
+      "path": "lib/db/src/schema/groups.ts",
+      "sha256": "fee1d175dbba05e774ab26efa13056e9b31d91c6209d63b2fb2c183b4ad23dae"
+    },
+    {
+      "path": "lib/db/src/schema/index.ts",
+      "sha256": "fe0a5306df73ac35524c0e76444a777765cf3af106834d35b5aabe6af3c30b4d"
+    },
+    {
+      "path": "lib/db/src/schema/liveStreams.ts",
+      "sha256": "514e3cb651020a772c8c4893d8c82a69e9adce528ff441e760ea0c7419b927f6"
+    },
+    {
+      "path": "lib/db/src/schema/meetingNotes.ts",
+      "sha256": "d4fff1c54e556b6e2a033052af07a8f9a1c2e72e3c49389bc82d395a784f8aac"
+    },
+    {
+      "path": "lib/db/src/schema/meetings.ts",
+      "sha256": "1b1744c2c5cc1893d436c4dc3008700ccfb174655d26f3f96d3f39e78aaa4590"
+    },
+    {
+      "path": "lib/db/src/schema/messages.ts",
+      "sha256": "ce0ad875bf340529662dd82070fd986408e42baac228d3711709d0b481580dad"
+    },
+    {
+      "path": "lib/db/src/schema/notifications.ts",
+      "sha256": "02e46938dae7da2bc97271bbeb386330724b2fdd6e9dd1e23d5cac4cecd0fbe0"
+    },
+    {
+      "path": "lib/db/src/schema/participants.ts",
+      "sha256": "cc520537330f1263d814a1266f3c02e11614e23353e39e10777d9b681bbf0a5d"
+    },
+    {
+      "path": "lib/db/src/schema/phoneOtps.ts",
+      "sha256": "9febdfc156c2467ac43959083a1d6e121cedb6011c8c964e47616d1cd6d64040"
+    },
+    {
+      "path": "lib/db/src/schema/polls.ts",
+      "sha256": "d274fda272c073e09ac36f03883da01139da88ecd93b2aef5c28c6676c7a7e6c"
+    },
+    {
+      "path": "lib/db/src/schema/recordings.ts",
+      "sha256": "fd9c9043977e88b34cacfecc580672f310009cb27022aec42f1f8812c1fd9301"
+    },
+    {
+      "path": "lib/db/src/schema/remoteAccess.ts",
+      "sha256": "3ac7b4969d134f0ceb72ed6a473311f5b0037b91e3d7c623c721f895bd05e4b8"
+    },
+    {
+      "path": "lib/db/src/schema/serverConfig.ts",
+      "sha256": "680c6b514dc75ad876fbb83abdbe8f4f9e9fc0026ec794386ab95613fadaed14"
+    },
+    {
+      "path": "lib/db/src/schema/streamFollowers.ts",
+      "sha256": "4a8e32881b175a5ff1531425a6ca2dc5e473a526abe2a187e6a5a713a02d5a20"
+    },
+    {
+      "path": "lib/db/src/schema/userProfiles.ts",
+      "sha256": "45a9762c853962d04ba55e4e40fb0d11b57a6c5708900f8f8f9e181abaeebd7c"
+    },
+    {
+      "path": "lib/db/src/schema/userSessions.ts",
+      "sha256": "17a389cae027f49afef192fadc0338ab8eeaf12d1c8824361c4896cead5b984f"
+    },
+    {
+      "path": "lib/db/tsconfig.json",
+      "sha256": "69c976d11de35f0ac391934625beeccdd1b2689ba5d0f14c54b5384d4c30a9c9"
+    },
+    {
+      "path": "lib/integrations-openai-ai-server/package.json",
+      "sha256": "413b5dfa691e70a477c9ca884c1b330f91ed8c003d4310548aee3c78218397da"
+    },
+    {
+      "path": "lib/integrations-openai-ai-server/src/audio/client.ts",
+      "sha256": "f5a8305b30de6d2149ad346efeda35e487fee1768aa8d3f854255c336c710a0e"
+    },
+    {
+      "path": "lib/integrations-openai-ai-server/src/audio/index.ts",
+      "sha256": "46a81c3a1de8e8b21d3c77aa76041c6528ea6bcecc9de54a207435a76f99ff39"
+    },
+    {
+      "path": "lib/integrations-openai-ai-server/src/batch/index.ts",
+      "sha256": "cb320b7313f831e4cd8eb7f3e8b354d0b2dab5e1b5fd36e94041605e6b6200a4"
+    },
+    {
+      "path": "lib/integrations-openai-ai-server/src/batch/utils.ts",
+      "sha256": "caaf28fad44a8a0745de46a6e508ed4f548fdff57167ad83be6437241a915beb"
+    },
+    {
+      "path": "lib/integrations-openai-ai-server/src/client.ts",
+      "sha256": "98a4a1c30b44462bc6456c6c05a94325ee4049d1f07b8a6a5a2441c6d200309d"
+    },
+    {
+      "path": "lib/integrations-openai-ai-server/src/image/client.ts",
+      "sha256": "bd63936b083592e6d6664f2ea0bfb64ad08c940f1156b311bd878581ef7a11cb"
+    },
+    {
+      "path": "lib/integrations-openai-ai-server/src/image/index.ts",
+      "sha256": "31eda81d6e721f2988e2d4712a6769ec4a80562b11adfd28a993d5c50ca35932"
+    },
+    {
+      "path": "lib/integrations-openai-ai-server/src/index.ts",
+      "sha256": "16bb8a72af90ed0fc25e77b76c8d26b9cc432dba9a6a6306f7aa588b32707f17"
+    },
+    {
+      "path": "lib/integrations-openai-ai-server/tsconfig.json",
+      "sha256": "69c976d11de35f0ac391934625beeccdd1b2689ba5d0f14c54b5384d4c30a9c9"
+    },
+    {
+      "path": "lib/object-storage-web/package.json",
+      "sha256": "e465b4921dad0485b6ba897ab544f85a71bacd7303bbf077b3b3e2b3bb5325db"
+    },
+    {
+      "path": "lib/object-storage-web/src/ObjectUploader.tsx",
+      "sha256": "9d7c681c77f03e096bd86f12a632a8c18ae0bc47da36d2ac71d863cb8b4a6adb"
+    },
+    {
+      "path": "lib/object-storage-web/src/index.ts",
+      "sha256": "a8271c0a082bac8d7ca5521b2a293f713180e5d9808a5afc0731cb1853503cbc"
+    },
+    {
+      "path": "lib/object-storage-web/src/use-upload.ts",
+      "sha256": "fdc372222b0afdd80b9e4f446b957744da32d6e5bcf5da3a57bc1da6590104e6"
+    },
+    {
+      "path": "lib/object-storage-web/tsconfig.json",
+      "sha256": "1d465f97c33a6887a1833d99ebc123f1f6d75b4476f58b96b9437f434d0155f7"
+    }
+  ],
+  "rebuiltAsset": "artifacts/tancom/public/tancom-desktop-source.zip",
+  "omittedOriginalFiles": [
+    "artifacts/tancom/public/tancom-desktop-source.zip",
+    "**/.replit-artifact/artifact.toml"
+  ]
+}

@@ -1,0 +1,3948 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: TanCom video conferencing API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: meetings
+    description: Meeting operations
+  - name: participants
+    description: Participant management
+  - name: recordings
+    description: Meeting recordings
+  - name: contacts
+    description: User contacts
+  - name: groups
+    description: Contact groups
+  - name: chat
+    description: Chat messaging
+  - name: storage
+    description: Object storage upload and serving endpoints
+  - name: profile
+    description: User profile operations
+  - name: admin
+    description: Admin operations
+  - name: dashboard
+    description: Dashboard summary
+  - name: notes
+    description: Meeting notes and AI summaries
+  - name: live
+    description: Live Marketing — live video streaming
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Dashboard ───────────────────────────────────────────────────────────────
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/upcoming-meetings:
+    get:
+      operationId: getUpcomingMeetings
+      tags: [dashboard]
+      summary: Get upcoming meetings for current user
+      responses:
+        "200":
+          description: List of upcoming meetings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Meeting"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Get recent meeting activity
+      responses:
+        "200":
+          description: Recent activity feed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  # ─── Meetings ─────────────────────────────────────────────────────────────────
+  /meetings:
+    get:
+      operationId: listMeetings
+      tags: [meetings]
+      summary: List meetings for current user
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [upcoming, past, all]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of meetings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Meeting"
+    post:
+      operationId: createMeeting
+      tags: [meetings]
+      summary: Create a new meeting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMeetingBody"
+      responses:
+        "201":
+          description: Meeting created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meeting"
+
+  /meetings/{id}:
+    get:
+      operationId: getMeeting
+      tags: [meetings]
+      summary: Get a meeting by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Meeting details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meeting"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateMeeting
+      tags: [meetings]
+      summary: Update a meeting
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMeetingBody"
+      responses:
+        "200":
+          description: Updated meeting
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meeting"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteMeeting
+      tags: [meetings]
+      summary: Delete a meeting
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /meetings/join/{meetingCode}:
+    get:
+      operationId: getMeetingByCode
+      tags: [meetings]
+      summary: Get meeting by meeting code/ID for joining
+      parameters:
+        - name: meetingCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Meeting details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meeting"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /meetings/{id}/start:
+    post:
+      operationId: startMeeting
+      tags: [meetings]
+      summary: Start (or mark as active) a meeting
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Meeting started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meeting"
+
+  /meetings/{id}/end:
+    post:
+      operationId: endMeeting
+      tags: [meetings]
+      summary: End a meeting
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Meeting ended
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meeting"
+
+  /meetings/{id}/lock:
+    post:
+      operationId: lockMeeting
+      tags: [meetings]
+      summary: Lock or unlock a meeting
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LockMeetingBody"
+      responses:
+        "200":
+          description: Updated meeting
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meeting"
+
+  # ─── Participants ─────────────────────────────────────────────────────────────
+  /meetings/{id}/participants:
+    get:
+      operationId: listParticipants
+      tags: [participants]
+      summary: List participants for a meeting
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of participants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Participant"
+    post:
+      operationId: joinMeeting
+      tags: [participants]
+      summary: Join a meeting as a participant
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinMeetingBody"
+      responses:
+        "201":
+          description: Participant joined
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Participant"
+
+  /meetings/{id}/participants/{participantId}:
+    patch:
+      operationId: updateParticipant
+      tags: [participants]
+      summary: Update participant status (mute, video, role, admit, remove)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: participantId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateParticipantBody"
+      responses:
+        "200":
+          description: Updated participant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Participant"
+    delete:
+      operationId: removeParticipant
+      tags: [participants]
+      summary: Remove a participant from meeting
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: participantId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed
+
+  /meetings/{id}/participants/admit-all:
+    post:
+      operationId: admitAllParticipants
+      tags: [participants]
+      summary: Admit all waiting room participants
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: All admitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /meetings/{id}/participants/mute-all:
+    post:
+      operationId: muteAllParticipants
+      tags: [participants]
+      summary: Mute all participants
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: All muted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ─── Recordings ───────────────────────────────────────────────────────────────
+  /recordings:
+    get:
+      operationId: listRecordings
+      tags: [recordings]
+      summary: List recordings accessible to the current user
+      responses:
+        "200":
+          description: List of recordings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recording"
+
+  /recordings/{id}:
+    get:
+      operationId: getRecording
+      tags: [recordings]
+      summary: Get a recording by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recording details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recording"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteRecording
+      tags: [recordings]
+      summary: Delete a recording
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /meetings/{id}/recordings:
+    post:
+      operationId: createRecording
+      tags: [recordings]
+      summary: Start a recording for a meeting
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRecordingBody"
+      responses:
+        "201":
+          description: Recording started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recording"
+
+  /recordings/{id}/stop:
+    post:
+      operationId: stopRecording
+      tags: [recordings]
+      summary: Stop a recording
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recording stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recording"
+
+  # ─── Meeting Notes ────────────────────────────────────────────────────────────
+  /meetings/{id}/notes:
+    get:
+      operationId: listMeetingNotes
+      tags: [notes]
+      summary: List notes for a meeting
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of meeting notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MeetingNote"
+    post:
+      operationId: createMeetingNote
+      tags: [notes]
+      summary: Create a meeting note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMeetingNoteBody"
+      responses:
+        "201":
+          description: Note created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetingNote"
+
+  /meetings/{id}/notes/export:
+    get:
+      operationId: exportMeetingNotes
+      tags: [notes]
+      summary: Export meeting notes as Markdown text
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Markdown text of all notes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  markdown:
+                    type: string
+                required:
+                  - markdown
+
+  /meetings/{id}/notes/{noteId}:
+    put:
+      operationId: updateMeetingNote
+      tags: [notes]
+      summary: Update a meeting note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: noteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMeetingNoteBody"
+      responses:
+        "200":
+          description: Note updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetingNote"
+    delete:
+      operationId: deleteMeetingNote
+      tags: [notes]
+      summary: Delete a meeting note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: noteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Note deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /meetings/{id}/summary:
+    get:
+      operationId: getMeetingSummary
+      tags: [notes]
+      summary: Get AI-generated summary for a meeting
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Meeting summary (null if not yet generated)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetingSummary"
+    post:
+      operationId: generateMeetingSummary
+      tags: [notes]
+      summary: Generate AI summary from meeting notes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Generated summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeetingSummary"
+
+  /notes/polish:
+    post:
+      tags: [notes]
+      summary: Polish dictated text using AI
+      operationId: polishNoteText
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                noteType:
+                  type: string
+                  enum: [note, action, decision, highlight]
+              required: [content, noteType]
+      responses:
+        "200":
+          description: Polished text
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  polished:
+                    type: string
+                required: [polished]
+
+  # ─── Contacts ────────────────────────────────────────────────────────────────
+  /contacts:
+    get:
+      operationId: listContacts
+      tags: [contacts]
+      summary: List user's contacts
+      responses:
+        "200":
+          description: List of contacts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Contact"
+    post:
+      operationId: createContact
+      tags: [contacts]
+      summary: Add a contact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContactBody"
+      responses:
+        "201":
+          description: Contact created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+
+  /contacts/{id}:
+    patch:
+      operationId: updateContact
+      tags: [contacts]
+      summary: Update a contact (edit fields or toggle favorite/pin/block/mute)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateContactBody"
+      responses:
+        "200":
+          description: Updated contact
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+    delete:
+      operationId: deleteContact
+      tags: [contacts]
+      summary: Remove a contact
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /contacts/{id}/profile:
+    get:
+      operationId: getContactProfile
+      tags: [contacts]
+      summary: Rich profile for a contact (TanCom profile if registered)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Contact with optional TanCom profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactProfileResponse"
+
+  /users/search:
+    get:
+      operationId: searchUsers
+      tags: [contacts]
+      summary: Search TanCom users by exact email or username prefix (always returns an array)
+      parameters:
+        - name: email
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: username
+          in: query
+          required: false
+          schema:
+            type: string
+            description: Username prefix (min 2 chars)
+      responses:
+        "200":
+          description: Matching users (empty array when no match)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserSearchResult"
+
+  /profile/username-available:
+    get:
+      operationId: checkUsernameAvailable
+      tags: [profile]
+      summary: Check whether a username is valid and available
+      parameters:
+        - name: username
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Availability result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available:
+                    type: boolean
+                  valid:
+                    type: boolean
+                required: [available, valid]
+
+  /presence/heartbeat:
+    post:
+      operationId: presenceHeartbeat
+      tags: [profile]
+      summary: Update the caller's last-seen timestamp (call ~every 30s while active)
+      responses:
+        "200":
+          description: Heartbeat recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required: [ok]
+
+  # ─── Groups ───────────────────────────────────────────────────────────────────
+  /groups:
+    get:
+      operationId: listGroups
+      tags: [groups]
+      summary: List my groups
+      responses:
+        "200":
+          description: List of groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Group"
+    post:
+      operationId: createGroup
+      tags: [groups]
+      summary: Create a group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupBody"
+      responses:
+        "201":
+          description: Group created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+
+  /groups/{groupId}:
+    patch:
+      operationId: patchGroup
+      tags: [groups]
+      summary: Update group name, description, or require-approval setting
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchGroupBody"
+      responses:
+        "200":
+          description: Group updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+    delete:
+      operationId: deleteGroup
+      tags: [groups]
+      summary: Delete a group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /groups/{groupId}/mute:
+    post:
+      operationId: muteGroup
+      tags: [groups]
+      summary: Mute notifications for a group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Group muted
+    delete:
+      operationId: unmuteGroup
+      tags: [groups]
+      summary: Unmute notifications for a group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Group unmuted
+
+  /groups/{groupId}/join-requests:
+    get:
+      operationId: listGroupJoinRequests
+      tags: [groups]
+      summary: List pending join requests (owner/admin only)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of pending join requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupJoinRequest"
+    post:
+      operationId: submitGroupJoinRequest
+      tags: [groups]
+      summary: Submit a join request for a require-approval group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Join request submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupJoinRequestResult"
+
+  /groups/{groupId}/join-requests/{requestId}/approve:
+    post:
+      operationId: approveGroupJoinRequest
+      tags: [groups]
+      summary: Approve a join request (owner/admin only)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Request approved
+
+  /groups/{groupId}/join-requests/{requestId}/reject:
+    post:
+      operationId: rejectGroupJoinRequest
+      tags: [groups]
+      summary: Reject a join request (owner/admin only)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Request rejected
+
+  /groups/{groupId}/posts/pinned:
+    get:
+      operationId: listPinnedGroupPosts
+      tags: [groups]
+      summary: List pinned posts in a group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Pinned posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupPost"
+
+  /groups/{groupId}/posts/{postId}/pin:
+    post:
+      operationId: pinGroupPost
+      tags: [groups]
+      summary: Pin a group post (owner/admin only)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Post pinned
+    delete:
+      operationId: unpinGroupPost
+      tags: [groups]
+      summary: Unpin a group post (owner/admin only)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Post unpinned
+
+  /groups/{groupId}/invite-token/regenerate:
+    post:
+      operationId: regenerateGroupInviteToken
+      tags: [groups]
+      summary: Revoke the current invite link and generate a new one
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: New invite token generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupInviteLink"
+
+  /groups/{groupId}/leave:
+    delete:
+      operationId: leaveGroup
+      tags: [groups]
+      summary: Leave a group you are a member of
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Left the group
+
+  /groups/{groupId}/members:
+    get:
+      operationId: listGroupMembers
+      tags: [groups]
+      summary: List members of a group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupMember"
+    post:
+      operationId: addGroupMember
+      tags: [groups]
+      summary: Add a member to a group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddGroupMemberBody"
+      responses:
+        "201":
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMember"
+
+  /groups/{groupId}/members/{memberId}:
+    put:
+      operationId: setGroupMemberRole
+      tags: [groups]
+      summary: Set a member's role and permissions (owner only)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGroupMemberBody"
+      responses:
+        "200":
+          description: Member updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMember"
+    patch:
+      operationId: patchGroupMember
+      tags: [groups]
+      summary: Update a member's role and permissions (owner only)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGroupMemberBody"
+      responses:
+        "200":
+          description: Member updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMember"
+    delete:
+      operationId: deleteGroupMember
+      tags: [groups]
+      summary: Remove a member from a group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed
+
+  /groups/{groupId}/presence:
+    get:
+      operationId: getGroupPresence
+      tags: [groups]
+      summary: Get availability status for group members
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Presence statuses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupMemberPresence"
+
+  /groups/{groupId}/posts:
+    get:
+      operationId: listGroupPosts
+      tags: [groups]
+      summary: List posts in a group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupPost"
+    post:
+      operationId: createGroupPost
+      tags: [groups]
+      summary: Create a post in a group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupPostBody"
+      responses:
+        "201":
+          description: Post created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupPost"
+
+  /groups/{groupId}/posts/{postId}:
+    delete:
+      operationId: deleteGroupPost
+      tags: [groups]
+      summary: Delete a group post
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /groups/{groupId}/posts/{postId}/reactions:
+    post:
+      operationId: toggleGroupPostReaction
+      tags: [groups]
+      summary: Toggle a reaction on a post
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToggleGroupPostReactionBody"
+      responses:
+        "200":
+          description: Updated post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupPost"
+
+  /groups/{groupId}/posts/{postId}/replies:
+    get:
+      operationId: listGroupPostReplies
+      tags: [groups]
+      summary: List replies on a post
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of replies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupPostReply"
+    post:
+      operationId: createGroupPostReply
+      tags: [groups]
+      summary: Reply to a post
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupPostReplyBody"
+      responses:
+        "201":
+          description: Reply created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupPostReply"
+
+  /groups/{groupId}/posts/{postId}/replies/{replyId}:
+    delete:
+      operationId: deleteGroupPostReply
+      tags: [groups]
+      summary: Delete a reply
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: replyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /groups/{groupId}/posts/{postId}/seen-by:
+    get:
+      operationId: getGroupPostSeenBy
+      tags: [groups]
+      summary: Get who has seen a post (author/admin/owner only)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of viewers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupPostSeenByEntry"
+    post:
+      operationId: markGroupPostSeen
+      tags: [groups]
+      summary: Mark a post as seen by current user
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Marked as seen
+
+  /groups/{groupId}/members/{memberId}/permissions:
+    put:
+      operationId: updateGroupMemberPermissions
+      tags: [groups]
+      summary: Update a member's permissions (admin/owner only, not on owner)
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMemberPermissionsBody"
+      responses:
+        "200":
+          description: Permissions updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMember"
+
+  /group-invitations:
+    get:
+      operationId: listGroupInvitations
+      tags: [groups]
+      summary: List pending and accepted group invitations for the current user
+      responses:
+        "200":
+          description: List of group invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupInvitation"
+
+  /group-invitations/{memberId}:
+    put:
+      operationId: respondToGroupInvitation
+      tags: [groups]
+      summary: Accept or decline a group invitation
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RespondToInvitationBody"
+      responses:
+        "200":
+          description: Updated invitation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupInvitation"
+
+  /groups/{groupId}/invite-token:
+    get:
+      operationId: getGroupInviteToken
+      tags: [groups]
+      summary: Get or generate the shareable invite token for a group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invite link info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupInviteLink"
+
+  /group-join/{token}:
+    get:
+      operationId: getGroupJoinInfo
+      tags: [groups]
+      summary: Get public group info for a join-via-link token (no auth required)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Group info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupJoinInfo"
+        "404":
+          description: Invalid or expired token
+    post:
+      operationId: joinGroupViaToken
+      tags: [groups]
+      summary: Join a group using a shareable invite token
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Joined successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupJoinResult"
+
+  /groups/{groupId}/invite:
+    post:
+      operationId: inviteGroupToMeeting
+      tags: [groups]
+      summary: Send meeting invite to all group members
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteGroupBody"
+      responses:
+        "200":
+          description: Invites queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invited:
+                    type: integer
+                required:
+                  - invited
+
+  # ─── Storage ──────────────────────────────────────────────────────────────────
+  /storage/uploads/request-url:
+    post:
+      tags: [storage]
+      operationId: requestUploadUrl
+      summary: Request a presigned URL for file upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Presigned upload URL generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+        "400":
+          description: Missing or invalid required fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /storage/objects/{objectPath}:
+    get:
+      tags: [storage]
+      operationId: getStorageObject
+      summary: Serve an uploaded object
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Object content streamed
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  # ─── Profile ──────────────────────────────────────────────────────────────────
+  /profile/public-key:
+    put:
+      operationId: updatePublicKey
+      tags: [profile]
+      summary: Upload or replace this user's ECDH public key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePublicKeyBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  # ─── Chat ─────────────────────────────────────────────────────────────────────
+  /chat/rooms:
+    get:
+      operationId: listChatRooms
+      tags: [chat]
+      summary: List chat rooms I am part of
+      responses:
+        "200":
+          description: List of chat rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatRoomSummary"
+    post:
+      operationId: createChatRoom
+      tags: [chat]
+      summary: Create or open a chat room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChatRoomBody"
+      responses:
+        "200":
+          description: Chat room (existing or newly created)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatRoomSummary"
+
+  /chat/rooms/{roomId}/messages:
+    get:
+      operationId: listChatMessages
+      tags: [chat]
+      summary: List messages in a room (most recent first)
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: before
+          in: query
+          schema:
+            type: integer
+          description: Message id cursor for pagination
+      responses:
+        "200":
+          description: Messages list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessageItem"
+    post:
+      operationId: sendChatMessage
+      tags: [chat]
+      summary: Send a message to a room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageBody"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessageItem"
+
+  /chat/rooms/{roomId}/archive:
+    patch:
+      operationId: setChatRoomArchived
+      tags: [chat]
+      summary: Archive or unarchive a chat room for the calling participant
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                archived:
+                  type: boolean
+              required: [archived]
+      responses:
+        "200":
+          description: Updated archived state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  archived:
+                    type: boolean
+                required: [archived]
+
+  /chat/rooms/{roomId}/member-keys:
+    get:
+      operationId: listRoomMemberKeys
+      tags: [chat]
+      summary: Get ECDH public keys for all room members
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Member public keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MemberPublicKey"
+
+  /chat/rooms/{roomId}/e2e-key:
+    get:
+      operationId: getRoomE2EKey
+      tags: [chat]
+      summary: Get my encrypted conversation key for a room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Encrypted key bundle
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/E2EKeyBundle"
+        "404":
+          description: No key set yet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: setRoomE2EKeys
+      tags: [chat]
+      summary: Store encrypted conversation keys for all room participants
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/E2EKeyBundleInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /chat/rooms/{roomId}/members:
+    get:
+      operationId: listChatRoomMembers
+      tags: [chat]
+      summary: List members of a chat room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Members list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatRoomMember"
+
+  # ─── Admin ────────────────────────────────────────────────────────────────────
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: List all users (admin only)
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminUser"
+
+  /admin/users/{userId}:
+    patch:
+      operationId: adminUpdateUser
+      tags: [admin]
+      summary: Update user role or status
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUpdateUserBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+
+  /admin/analytics:
+    get:
+      operationId: getAdminAnalytics
+      tags: [admin]
+      summary: Get platform analytics (admin only)
+      responses:
+        "200":
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAnalytics"
+
+  /admin/meetings:
+    get:
+      operationId: adminListMeetings
+      tags: [admin]
+      summary: List all meetings (admin only)
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of all meetings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Meeting"
+
+  /admin/session-analytics:
+    get:
+      operationId: getAdminSessionAnalytics
+      tags: [admin]
+      summary: Get session/login analytics (admin only)
+      responses:
+        "200":
+          description: Session analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSessionAnalytics"
+
+  # ─── Sessions ─────────────────────────────────────────────────────────────────
+  /sessions/start:
+    post:
+      operationId: startSession
+      tags: [admin]
+      summary: Record session start for current user
+      responses:
+        "200":
+          description: Session started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:
+                    type: integer
+                required:
+                  - sessionId
+
+  /sessions/end:
+    post:
+      operationId: endSession
+      tags: [admin]
+      summary: Record session end for current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EndSessionBody"
+      responses:
+        "200":
+          description: Session ended
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /sessions/ping:
+    post:
+      operationId: pingSession
+      tags: [admin]
+      summary: Heartbeat to keep session alive
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PingSessionBody"
+      responses:
+        "200":
+          description: Ping acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ─── Live Marketing ───────────────────────────────────────────────────────────
+  /live/streams:
+    get:
+      operationId: listLiveStreams
+      tags: [live]
+      summary: List public/active live streams
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [idle, live, ended]
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of live streams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LiveStream"
+    post:
+      operationId: createLiveStream
+      tags: [live]
+      summary: Create a new live stream
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLiveStreamBody"
+      responses:
+        "201":
+          description: Created live stream
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveStream"
+
+  /live/streams/my:
+    get:
+      operationId: getMyLiveStreams
+      tags: [live]
+      summary: Get streams owned by the current user
+      responses:
+        "200":
+          description: My streams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LiveStream"
+
+  /live/streams/{streamKey}:
+    get:
+      operationId: getLiveStream
+      tags: [live]
+      summary: Get a single live stream by key
+      parameters:
+        - in: path
+          name: streamKey
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Live stream
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveStream"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateLiveStream
+      tags: [live]
+      summary: Update stream settings
+      parameters:
+        - in: path
+          name: streamKey
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLiveStreamBody"
+      responses:
+        "200":
+          description: Updated live stream
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveStream"
+    delete:
+      operationId: deleteLiveStream
+      tags: [live]
+      summary: Delete a stream
+      parameters:
+        - in: path
+          name: streamKey
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /live/streams/{streamKey}/go-live:
+    post:
+      operationId: goLive
+      tags: [live]
+      summary: Start broadcasting — provisions LiveKit room + RTMP ingress
+      parameters:
+        - in: path
+          name: streamKey
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Go-live credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoLiveResult"
+
+  /live/streams/{streamKey}/end:
+    post:
+      operationId: endLiveStream
+      tags: [live]
+      summary: End an active live stream
+      parameters:
+        - in: path
+          name: streamKey
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stream ended
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveStream"
+
+  /live/streams/{streamKey}/token:
+    get:
+      operationId: getLiveStreamToken
+      tags: [live]
+      summary: Get a LiveKit viewer token for a stream
+      parameters:
+        - in: path
+          name: streamKey
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Viewer token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveStreamToken"
+
+  /live/follow/{streamerClerkId}:
+    post:
+      operationId: toggleFollowStreamer
+      tags: [live]
+      summary: Follow or unfollow a streamer
+      parameters:
+        - in: path
+          name: streamerClerkId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Follow status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FollowResult"
+
+  /live/following:
+    get:
+      operationId: getLiveFollowing
+      tags: [live]
+      summary: Get streamers the current user follows
+      responses:
+        "200":
+          description: Following list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FollowedStreamer"
+
+  /live/followers:
+    get:
+      operationId: getLiveFollowers
+      tags: [live]
+      summary: Get followers of the current user
+      responses:
+        "200":
+          description: Followers list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FollowersResult"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+
+    Meeting:
+      type: object
+      properties:
+        id:
+          type: integer
+        meetingCode:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        hostClerkId:
+          type: string
+        hostName:
+          type: string
+        status:
+          type: string
+          enum: [scheduled, active, ended, cancelled]
+        type:
+          type: string
+          enum: [instant, scheduled, recurring]
+        scheduledAt:
+          type: ["string", "null"]
+        startedAt:
+          type: ["string", "null"]
+        endedAt:
+          type: ["string", "null"]
+        duration:
+          type: ["integer", "null"]
+        plannedDuration:
+          type: ["integer", "null"]
+        timezone:
+          type: string
+        passcode:
+          type: ["string", "null"]
+        isPasswordProtected:
+          type: boolean
+        waitingRoomEnabled:
+          type: boolean
+        isLocked:
+          type: boolean
+        maxParticipants:
+          type: ["integer", "null"]
+        participantCount:
+          type: integer
+        allowScreenShare:
+          type: boolean
+        allowChat:
+          type: boolean
+        muteOnEntry:
+          type: boolean
+        videoOffOnEntry:
+          type: boolean
+        recurrencePattern:
+          type: ["string", "null"]
+          enum: [daily, weekly, monthly, null]
+        recurrenceInterval:
+          type: ["integer", "null"]
+        recurrenceDays:
+          type: ["string", "null"]
+        recurrenceEndDate:
+          type: ["string", "null"]
+        recurrenceCount:
+          type: ["integer", "null"]
+        inviteLink:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - meetingCode
+        - title
+        - hostClerkId
+        - hostName
+        - status
+        - type
+        - timezone
+        - isPasswordProtected
+        - waitingRoomEnabled
+        - isLocked
+        - participantCount
+        - allowScreenShare
+        - allowChat
+        - muteOnEntry
+        - videoOffOnEntry
+        - inviteLink
+        - createdAt
+        - updatedAt
+
+    CreateMeetingBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [instant, scheduled, recurring]
+        scheduledAt:
+          type: string
+        plannedDuration:
+          type: integer
+          description: Planned duration in minutes
+        timezone:
+          type: string
+        passcode:
+          type: string
+        waitingRoomEnabled:
+          type: boolean
+        maxParticipants:
+          type: integer
+        allowScreenShare:
+          type: boolean
+        allowChat:
+          type: boolean
+        muteOnEntry:
+          type: boolean
+        videoOffOnEntry:
+          type: boolean
+        recurrencePattern:
+          type: string
+          enum: [daily, weekly, monthly]
+          description: Recurrence pattern for recurring meetings
+        recurrenceInterval:
+          type: integer
+          description: Repeat every N days/weeks/months
+        recurrenceDays:
+          type: string
+          description: JSON array of weekday numbers (0=Sun..6=Sat) for weekly recurrence
+        recurrenceEndDate:
+          type: string
+          description: ISO date string when recurrence ends
+        recurrenceCount:
+          type: integer
+          description: Maximum number of occurrences
+        groupId:
+          type: integer
+          description: Optional group ID — auto-invites all accepted group members as participants
+      required:
+        - title
+        - type
+
+    UpdateMeetingBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        scheduledAt:
+          type: string
+        timezone:
+          type: string
+        passcode:
+          type: string
+        waitingRoomEnabled:
+          type: boolean
+        maxParticipants:
+          type: integer
+        allowScreenShare:
+          type: boolean
+        allowChat:
+          type: boolean
+        muteOnEntry:
+          type: boolean
+        videoOffOnEntry:
+          type: boolean
+        status:
+          type: string
+          enum: [scheduled, active, ended, cancelled]
+
+    LockMeetingBody:
+      type: object
+      properties:
+        locked:
+          type: boolean
+      required:
+        - locked
+
+    Participant:
+      type: object
+      properties:
+        id:
+          type: integer
+        meetingId:
+          type: integer
+        clerkId:
+          type: ["string", "null"]
+        displayName:
+          type: string
+        role:
+          type: string
+          enum: [host, cohost, participant, guest]
+        status:
+          type: string
+          enum: [waiting, admitted, active, left, removed, denied]
+        isMuted:
+          type: boolean
+        isVideoOff:
+          type: boolean
+        isHandRaised:
+          type: boolean
+        joinedAt:
+          type: ["string", "null"]
+        leftAt:
+          type: ["string", "null"]
+      required:
+        - id
+        - meetingId
+        - displayName
+        - role
+        - status
+        - isMuted
+        - isVideoOff
+        - isHandRaised
+
+    JoinMeetingBody:
+      type: object
+      properties:
+        displayName:
+          type: string
+        passcode:
+          type: string
+        clerkId:
+          type: string
+      required:
+        - displayName
+
+    UpdateParticipantBody:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [host, cohost, participant, guest]
+        status:
+          type: string
+          enum: [waiting, admitted, active, left, removed, denied]
+        isMuted:
+          type: boolean
+        isVideoOff:
+          type: boolean
+        isHandRaised:
+          type: boolean
+        displayName:
+          type: string
+
+    Recording:
+      type: object
+      properties:
+        id:
+          type: integer
+        meetingId:
+          type: integer
+        meetingTitle:
+          type: string
+        status:
+          type: string
+          enum: [recording, stopped, processing, available, failed]
+        fileUrl:
+          type: ["string", "null"]
+        fileSizeBytes:
+          type: ["integer", "null"]
+        durationSeconds:
+          type: ["integer", "null"]
+        startedAt:
+          type: string
+        stoppedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - meetingId
+        - meetingTitle
+        - status
+        - startedAt
+        - createdAt
+
+    CreateRecordingBody:
+      type: object
+      properties:
+        initiatedByClerkId:
+          type: string
+      required:
+        - initiatedByClerkId
+
+    Contact:
+      type: object
+      properties:
+        id:
+          type: integer
+        ownerClerkId:
+          type: string
+        contactClerkId:
+          type: ["string", "null"]
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        isFavorite:
+          type: boolean
+        isPinned:
+          type: boolean
+        isBlocked:
+          type: boolean
+        isMuted:
+          type: boolean
+        category:
+          type: ["string", "null"]
+          description: One of family, friend, work, client, vendor — or null
+        labels:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - ownerClerkId
+        - name
+        - email
+        - createdAt
+
+    UpdateContactBody:
+      type: object
+      description: At least one field must be provided.
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: ["string", "null"]
+        isFavorite:
+          type: boolean
+        isPinned:
+          type: boolean
+        isBlocked:
+          type: boolean
+        isMuted:
+          type: boolean
+        category:
+          type: ["string", "null"]
+          description: One of family, friend, work, client, vendor — or null to clear
+        labels:
+          type: array
+          items:
+            type: string
+          description: Full replacement list (max 20 labels, 30 chars each)
+
+    ContactProfileResponse:
+      type: object
+      properties:
+        contact:
+          $ref: "#/components/schemas/Contact"
+        profile:
+          type: ["object", "null"]
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+            username:
+              type: ["string", "null"]
+            bio:
+              type: ["string", "null"]
+            lastLoginAt:
+              type: ["string", "null"]
+            lastSeenAt:
+              type: ["string", "null"]
+          required:
+            - name
+            - email
+        online:
+          type: boolean
+          description: Whether the contact was seen within the last 90 seconds
+      required:
+        - contact
+        - profile
+        - online
+
+    UserSearchResult:
+      type: object
+      properties:
+        clerkId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        username:
+          type: ["string", "null"]
+      required: [clerkId, name, email]
+
+    ContactCardInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: ["string", "null"]
+          maxLength: 30
+          pattern: '^[+\d\s().\/\-]{0,30}$'
+        username:
+          type: ["string", "null"]
+          maxLength: 50
+          pattern: '^[\w.\-@]{1,50}$'
+        contactClerkId:
+          type: ["string", "null"]
+          maxLength: 128
+      required: [name, email]
+
+    CreateContactBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        contactClerkId:
+          type: string
+      required:
+        - name
+        - email
+
+    Group:
+      type: object
+      properties:
+        id:
+          type: integer
+        ownerClerkId:
+          type: string
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        requireApproval:
+          type: boolean
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+        role:
+          type: string
+          enum: [owner, admin, member]
+        isMuted:
+          type: boolean
+      required:
+        - id
+        - ownerClerkId
+        - name
+        - memberCount
+        - createdAt
+        - role
+
+    GroupMember:
+      type: object
+      properties:
+        id:
+          type: integer
+        groupId:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: ["string", "null"]
+        addedAt:
+          type: string
+        invitedClerkId:
+          type: ["string", "null"]
+        invitationStatus:
+          type: ["string", "null"]
+          enum: [pending, accepted, declined, null]
+        memberRole:
+          type: string
+          enum: [owner, member, admin]
+        canPost:
+          type: boolean
+        canDeleteAnyPost:
+          type: boolean
+        canAddMembers:
+          type: boolean
+        canEditGroupInfo:
+          type: boolean
+      required:
+        - id
+        - groupId
+        - name
+        - email
+        - addedAt
+        - memberRole
+        - canPost
+        - canDeleteAnyPost
+
+    GroupInvitation:
+      type: object
+      properties:
+        memberId:
+          type: integer
+        groupId:
+          type: integer
+        groupName:
+          type: string
+        ownerClerkId:
+          type: string
+        memberCount:
+          type: integer
+        invitedAt:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, declined]
+      required:
+        - memberId
+        - groupId
+        - groupName
+        - ownerClerkId
+        - memberCount
+        - invitedAt
+        - status
+
+    RespondToInvitationBody:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [accept, decline]
+      required:
+        - action
+
+    GroupInviteLink:
+      type: object
+      properties:
+        token:
+          type: string
+        link:
+          type: string
+      required:
+        - token
+        - link
+
+    GroupJoinInfo:
+      type: object
+      properties:
+        groupId:
+          type: integer
+        groupName:
+          type: string
+        description:
+          type: ["string", "null"]
+        memberCount:
+          type: integer
+        requireApproval:
+          type: boolean
+      required:
+        - groupId
+        - groupName
+        - memberCount
+
+    GroupJoinResult:
+      type: object
+      properties:
+        groupId:
+          type: integer
+        groupName:
+          type: string
+        alreadyMember:
+          type: boolean
+        status:
+          type: string
+          enum: [joined, pending]
+      required:
+        - groupId
+        - groupName
+
+    GroupMemberPresence:
+      type: object
+      properties:
+        memberId:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        status:
+          type: string
+          enum: [available, in_meeting]
+      required:
+        - memberId
+        - name
+        - email
+        - status
+
+    CreateGroupBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        requireApproval:
+          type: boolean
+      required:
+        - name
+
+    PatchGroupBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        requireApproval:
+          type: boolean
+
+    UpdateGroupMemberBody:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [member, admin]
+        canPost:
+          type: boolean
+        canDeleteAnyPost:
+          type: boolean
+        canAddMembers:
+          type: boolean
+        canEditGroupInfo:
+          type: boolean
+
+    GroupJoinRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        groupId:
+          type: integer
+        requesterClerkId:
+          type: string
+        requesterName:
+          type: string
+        requesterEmail:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        requestedAt:
+          type: string
+        reviewedAt:
+          type: ["string", "null"]
+        reviewedByClerkId:
+          type: ["string", "null"]
+      required:
+        - id
+        - groupId
+        - requesterClerkId
+        - requesterName
+        - requesterEmail
+        - status
+        - requestedAt
+
+    GroupJoinRequestResult:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        requestId:
+          type: integer
+      required:
+        - status
+
+    GroupPost:
+      type: object
+      properties:
+        id:
+          type: integer
+        groupId:
+          type: integer
+        authorClerkId:
+          type: string
+        authorName:
+          type: string
+        content:
+          type: string
+        sharedFromPostId:
+          type: ["integer", "null"]
+        sharedFromContent:
+          type: ["string", "null"]
+        sharedFromAuthorName:
+          type: ["string", "null"]
+        fileObjectPath:
+          type: ["string", "null"]
+        fileName:
+          type: ["string", "null"]
+        fileMimeType:
+          type: ["string", "null"]
+        fileSizeBytes:
+          type: ["integer", "null"]
+        pinned:
+          type: boolean
+        createdAt:
+          type: string
+        reactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupPostReactionSummary"
+        myReaction:
+          type: ["string", "null"]
+        replyCount:
+          type: integer
+        viewCount:
+          type: integer
+        isOwn:
+          type: boolean
+        canDelete:
+          type: boolean
+      required:
+        - id
+        - groupId
+        - authorClerkId
+        - authorName
+        - content
+        - createdAt
+        - reactions
+        - replyCount
+        - viewCount
+        - isOwn
+        - canDelete
+
+    GroupPostReactionSummary:
+      type: object
+      properties:
+        emoji:
+          type: string
+        count:
+          type: integer
+      required:
+        - emoji
+        - count
+
+    GroupPostReply:
+      type: object
+      properties:
+        id:
+          type: integer
+        postId:
+          type: integer
+        authorClerkId:
+          type: string
+        authorName:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+        isOwn:
+          type: boolean
+      required:
+        - id
+        - postId
+        - authorClerkId
+        - authorName
+        - content
+        - createdAt
+        - isOwn
+
+    GroupPostSeenByEntry:
+      type: object
+      properties:
+        viewerClerkId:
+          type: string
+        viewerName:
+          type: string
+        seenAt:
+          type: string
+      required:
+        - viewerClerkId
+        - viewerName
+        - seenAt
+
+    CreateGroupPostBody:
+      type: object
+      properties:
+        content:
+          type: string
+        sharedFromPostId:
+          type: integer
+        fileObjectPath:
+          type: string
+        fileName:
+          type: string
+        fileMimeType:
+          type: string
+        fileSizeBytes:
+          type: integer
+
+    ToggleGroupPostReactionBody:
+      type: object
+      properties:
+        emoji:
+          type: string
+      required:
+        - emoji
+
+    CreateGroupPostReplyBody:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+
+    UpdateMemberPermissionsBody:
+      type: object
+      properties:
+        canPost:
+          type: boolean
+        canDeleteAnyPost:
+          type: boolean
+      required:
+        - canPost
+        - canDeleteAnyPost
+
+    AddGroupMemberBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        canPost:
+          type: boolean
+        canDeleteAnyPost:
+          type: boolean
+      required:
+        - name
+        - email
+
+    InviteGroupBody:
+      type: object
+      properties:
+        meetingCode:
+          type: string
+        inviteLink:
+          type: string
+        meetingTitle:
+          type: string
+      required:
+        - meetingCode
+        - inviteLink
+        - meetingTitle
+
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        size:
+          type: integer
+          minimum: 1
+        contentType:
+          type: string
+          minLength: 1
+
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+        objectPath:
+          type: string
+
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    ChatRoomSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [direct, group]
+        name:
+          type: string
+        groupId:
+          type: ["integer", "null"]
+        lastMessage:
+          type: ["string", "null"]
+        lastMessageAt:
+          type: ["string", "null"]
+        unreadCount:
+          type: integer
+        archived:
+          type: boolean
+          description: Whether the calling participant archived this room
+        otherLastSeenAt:
+          type: ["string", "null"]
+          description: For direct rooms — the other member's last-seen timestamp
+        otherOnline:
+          type: boolean
+          description: For direct rooms — whether the other member was seen in the last 90s
+        createdAt:
+          type: string
+      required:
+        - id
+        - type
+        - name
+        - unreadCount
+        - createdAt
+
+    ChatMessageItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        roomId:
+          type: integer
+        senderClerkId:
+          type: string
+        senderName:
+          type: string
+        content:
+          type: ["string", "null"]
+        fileObjectPath:
+          type: ["string", "null"]
+        fileName:
+          type: ["string", "null"]
+        fileMimeType:
+          type: ["string", "null"]
+        fileSizeBytes:
+          type: ["integer", "null"]
+        encryptedIv:
+          type: ["string", "null"]
+        messageType:
+          type: string
+          description: text | system | poll | contact — contact messages carry a JSON contact card in content (encrypted when the room is E2EE)
+        createdAt:
+          type: string
+      required:
+        - id
+        - roomId
+        - senderClerkId
+        - senderName
+        - createdAt
+
+    ChatRoomMember:
+      type: object
+      properties:
+        clerkId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+      required:
+        - clerkId
+        - name
+        - email
+
+    CreateChatRoomBody:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [direct, group]
+        targetClerkId:
+          type: string
+          description: For direct rooms — the other user's clerk ID
+        groupId:
+          type: integer
+          description: For group rooms — the group to create a chat for
+        name:
+          type: string
+          description: For group rooms — room display name
+      required:
+        - type
+
+    SendMessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+        encryptedIv:
+          type: string
+        fileObjectPath:
+          type: string
+        fileName:
+          type: string
+        fileMimeType:
+          type: string
+        fileSizeBytes:
+          type: integer
+        messageType:
+          type: string
+          enum: [text, contact]
+          description: Defaults to text. For contact — either send content+encryptedIv (E2EE, ciphertext of the card JSON) or a plaintext contactCard fallback.
+        contactCard:
+          $ref: "#/components/schemas/ContactCardInput"
+
+    AdminUser:
+      type: object
+      properties:
+        clerkId:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+        isActive:
+          type: boolean
+        meetingCount:
+          type: integer
+        lastLoginAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - clerkId
+        - email
+        - name
+        - role
+        - isActive
+        - meetingCount
+        - createdAt
+
+    AdminUpdateUserBody:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, admin]
+        isActive:
+          type: boolean
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalMeetings:
+          type: integer
+        upcomingMeetings:
+          type: integer
+        totalRecordings:
+          type: integer
+        totalContacts:
+          type: integer
+        meetingsThisMonth:
+          type: integer
+        totalMeetingMinutes:
+          type: integer
+      required:
+        - totalMeetings
+        - upcomingMeetings
+        - totalRecordings
+        - totalContacts
+        - meetingsThisMonth
+        - totalMeetingMinutes
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [meeting_started, meeting_ended, meeting_scheduled, recording_available, participant_joined]
+        title:
+          type: string
+        description:
+          type: string
+        meetingId:
+          type: ["integer", "null"]
+        occurredAt:
+          type: string
+      required:
+        - id
+        - type
+        - title
+        - description
+        - occurredAt
+
+    AdminAnalytics:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+        activeUsers:
+          type: integer
+        totalMeetings:
+          type: integer
+        activeMeetings:
+          type: integer
+        totalRecordings:
+          type: integer
+        storageUsedBytes:
+          type: integer
+        newUsersToday:
+          type: integer
+        newUsersThisWeek:
+          type: integer
+        meetingsByDay:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              count:
+                type: integer
+            required:
+              - date
+              - count
+        registrationsByDay:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              count:
+                type: integer
+            required:
+              - date
+              - count
+      required:
+        - totalUsers
+        - activeUsers
+        - totalMeetings
+        - activeMeetings
+        - totalRecordings
+        - storageUsedBytes
+        - newUsersToday
+        - newUsersThisWeek
+        - meetingsByDay
+        - registrationsByDay
+
+    AdminSessionAnalytics:
+      type: object
+      properties:
+        totalSessionsToday:
+          type: integer
+        avgSessionMinutesToday:
+          type: number
+        totalLoginHoursToday:
+          type: number
+        totalLoginHoursThisWeek:
+          type: number
+        loginMinutesByDay:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              minutes:
+                type: number
+              sessions:
+                type: integer
+            required:
+              - date
+              - minutes
+              - sessions
+        topUsersByTime:
+          type: array
+          items:
+            type: object
+            properties:
+              clerkId:
+                type: string
+              name:
+                type: string
+              email:
+                type: string
+              totalMinutesToday:
+                type: number
+              totalMinutesThisWeek:
+                type: number
+              sessionCount:
+                type: integer
+              lastLoginAt:
+                type: ["string", "null"]
+            required:
+              - clerkId
+              - name
+              - email
+              - totalMinutesToday
+              - totalMinutesThisWeek
+              - sessionCount
+      required:
+        - totalSessionsToday
+        - avgSessionMinutesToday
+        - totalLoginHoursToday
+        - totalLoginHoursThisWeek
+        - loginMinutesByDay
+        - topUsersByTime
+
+    EndSessionBody:
+      type: object
+      properties:
+        sessionId:
+          type: integer
+      required:
+        - sessionId
+
+    PingSessionBody:
+      type: object
+      properties:
+        sessionId:
+          type: integer
+      required:
+        - sessionId
+
+    UpdatePublicKeyBody:
+      type: object
+      properties:
+        publicKey:
+          type: string
+      required:
+        - publicKey
+
+    MemberPublicKey:
+      type: object
+      properties:
+        clerkId:
+          type: string
+        publicKey:
+          type: ["string", "null"]
+      required:
+        - clerkId
+        - publicKey
+
+    E2EKeyBundle:
+      type: object
+      properties:
+        encryptedKey:
+          type: string
+        iv:
+          type: string
+        ephemeralPublicKey:
+          type: string
+      required:
+        - encryptedKey
+        - iv
+        - ephemeralPublicKey
+
+    E2EKeyBundleInput:
+      type: object
+      properties:
+        clerkId:
+          type: string
+        encryptedKey:
+          type: string
+        iv:
+          type: string
+        ephemeralPublicKey:
+          type: string
+      required:
+        - clerkId
+        - encryptedKey
+        - iv
+        - ephemeralPublicKey
+
+    OkResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required:
+        - ok
+
+    MeetingNote:
+      type: object
+      properties:
+        id:
+          type: integer
+        meetingId:
+          type: integer
+        authorClerkId:
+          type: string
+        authorName:
+          type: string
+        content:
+          type: string
+        noteType:
+          type: string
+          enum: [note, action, decision, highlight]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - meetingId
+        - authorClerkId
+        - authorName
+        - content
+        - noteType
+        - createdAt
+        - updatedAt
+
+    CreateMeetingNoteBody:
+      type: object
+      properties:
+        content:
+          type: string
+        noteType:
+          type: string
+          enum: [note, action, decision, highlight]
+      required:
+        - content
+
+    UpdateMeetingNoteBody:
+      type: object
+      properties:
+        content:
+          type: string
+        noteType:
+          type: string
+          enum: [note, action, decision, highlight]
+
+    MeetingSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        meetingId:
+          type: integer
+        summary:
+          type: string
+        keyPoints:
+          type: string
+        actionItems:
+          type: string
+        decisions:
+          type: string
+        generatedAt:
+          type: string
+      required:
+        - id
+        - meetingId
+        - summary
+        - keyPoints
+        - actionItems
+        - decisions
+        - generatedAt
+
+    # ─── Live Marketing schemas ────────────────────────────────────────────────
+    LiveStream:
+      type: object
+      properties:
+        id:
+          type: integer
+        streamKey:
+          type: string
+        streamerClerkId:
+          type: string
+        streamerName:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        thumbnailUrl:
+          type: string
+          nullable: true
+        category:
+          type: string
+        tags:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [idle, live, ended]
+        privacy:
+          type: string
+          enum: [public, followers, private]
+        chatEnabled:
+          type: boolean
+        viewerCount:
+          type: integer
+        peakViewerCount:
+          type: integer
+        totalViews:
+          type: integer
+        livekitRoomName:
+          type: string
+          nullable: true
+        rtmpUrl:
+          type: string
+          nullable: true
+        rtmpStreamKey:
+          type: string
+          nullable: true
+        isPremium:
+          type: boolean
+        premiumPriceCents:
+          type: integer
+          nullable: true
+        startedAt:
+          type: string
+          nullable: true
+        endedAt:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        followerCount:
+          type: integer
+        isFollowing:
+          type: boolean
+      required:
+        - id
+        - streamKey
+        - streamerClerkId
+        - streamerName
+        - title
+        - category
+        - status
+        - privacy
+        - chatEnabled
+        - viewerCount
+        - peakViewerCount
+        - totalViews
+        - isPremium
+        - createdAt
+        - updatedAt
+        - followerCount
+        - isFollowing
+
+    CreateLiveStreamBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        tags:
+          type: string
+        privacy:
+          type: string
+          enum: [public, followers, private]
+        chatEnabled:
+          type: boolean
+        isPremium:
+          type: boolean
+        premiumPriceCents:
+          type: integer
+      required:
+        - title
+
+    UpdateLiveStreamBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        tags:
+          type: string
+        privacy:
+          type: string
+          enum: [public, followers, private]
+        chatEnabled:
+          type: boolean
+        isPremium:
+          type: boolean
+        premiumPriceCents:
+          type: integer
+        thumbnailUrl:
+          type: string
+
+    GoLiveResult:
+      type: object
+      properties:
+        stream:
+          $ref: "#/components/schemas/LiveStream"
+        streamerToken:
+          type: string
+        livekitUrl:
+          type: string
+        rtmpUrl:
+          type: string
+        rtmpStreamKey:
+          type: string
+      required:
+        - stream
+        - streamerToken
+        - livekitUrl
+        - rtmpUrl
+        - rtmpStreamKey
+
+    LiveStreamToken:
+      type: object
+      properties:
+        token:
+          type: string
+        livekitUrl:
+          type: string
+        livekitRoomName:
+          type: string
+      required:
+        - token
+        - livekitUrl
+        - livekitRoomName
+
+    FollowResult:
+      type: object
+      properties:
+        following:
+          type: boolean
+        followerCount:
+          type: integer
+      required:
+        - following
+        - followerCount
+
+    FollowedStreamer:
+      type: object
+      properties:
+        streamerClerkId:
+          type: string
+        streamerName:
+          type: string
+        followedAt:
+          type: string
+        isLive:
+          type: boolean
+        currentStreamKey:
+          type: string
+          nullable: true
+      required:
+        - streamerClerkId
+        - streamerName
+        - followedAt
+        - isLive
+
+    FollowersResult:
+      type: object
+      properties:
+        count:
+          type: integer
+        followers:
+          type: array
+          items:
+            type: object
+            properties:
+              followerClerkId:
+                type: string
+              followedAt:
+                type: string
+            required:
+              - followerClerkId
+              - followedAt
+      required:
+        - count
+        - followers
