@@ -47,11 +47,33 @@ const MODIFIER_KEY_MAP: Record<string, string> = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let pendingDisplayCallback: ((response: any) => void) | null = null;
+let pendingAudioRequested = false;
 let cachedDesktopSources: Electron.DesktopCapturerSource[] = [];
 
+function finishDisplayRequest(
+  cb: (response: { video?: Electron.DesktopCapturerSource; audio?: "loopback" }) => void,
+  source: Electron.DesktopCapturerSource | undefined,
+  withAudio: boolean,
+) {
+  if (!source) {
+    cb({});
+    return;
+  }
+  // loopback is the system mix. Only attach it when the sharer asked for
+  // computer audio — otherwise the meeting hears the whole desktop.
+  cb(withAudio ? { video: source, audio: "loopback" } : { video: source });
+}
+
 function setupDisplayMedia() {
-  session.defaultSession.setDisplayMediaRequestHandler((_request, callback) => {
+  session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
+    // A second share request must not leave the first getDisplayMedia() hanging.
+    if (pendingDisplayCallback) {
+      const stale = pendingDisplayCallback;
+      pendingDisplayCallback = null;
+      try { stale({}); } catch { /* ignore */ }
+    }
     pendingDisplayCallback = callback;
+    pendingAudioRequested = Boolean((request as { audioRequested?: boolean }).audioRequested);
 
     desktopCapturer
       .getSources({
@@ -61,6 +83,8 @@ function setupDisplayMedia() {
       })
       .then((sources) => {
         cachedDesktopSources = sources;
+        // A pick, cancel, or newer request already settled this callback.
+        if (pendingDisplayCallback !== callback) return;
         if (!mainWindow) {
           pendingDisplayCallback = null;
           callback({});
@@ -74,15 +98,18 @@ function setupDisplayMedia() {
         mainWindow.webContents.send("screen:sources-ready", serialized);
       })
       .catch(() => {
+        if (pendingDisplayCallback !== callback) return;
         pendingDisplayCallback = null;
         callback({});
       });
   });
 
-  ipcMain.on("screen:pick-source", (_event, sourceId: string | null) => {
+  ipcMain.on("screen:pick-source", (_event, sourceId: string | null, withSystemAudio?: boolean) => {
     const cb = pendingDisplayCallback;
     pendingDisplayCallback = null;
     if (!cb) return;
+
+    const wantAudio = typeof withSystemAudio === "boolean" ? withSystemAudio : pendingAudioRequested;
 
     if (!sourceId) {
       cb({});
@@ -91,13 +118,13 @@ function setupDisplayMedia() {
 
     const source = cachedDesktopSources.find((s) => s.id === sourceId);
     if (source) {
-      cb({ video: source });
+      finishDisplayRequest(cb, source, wantAudio);
     } else {
       desktopCapturer
         .getSources({ types: ["screen", "window"] })
         .then((fresh) => {
           const found = fresh.find((s) => s.id === sourceId);
-          cb(found ? { video: found } : {});
+          finishDisplayRequest(cb, found, wantAudio);
         })
         .catch(() => cb({}));
     }
