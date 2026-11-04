@@ -1,6 +1,6 @@
 {
   "name": "@workspace/tancom-desktop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "TanCom Desktop — native Electron wrapper with true remote control",
   "main": "dist/electron/main.js",
   "scripts": {
@@ -28,8 +28,14 @@
     "asar": false,
     "files": [
       "dist/**/*",
+      "!dist/**/*.map",
+      "!dist/**/builder-debug.yml",
       "assets/**/*",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "!node_modules/robotjs/bin/**",
+      "!node_modules/robotjs/src/**",
+      "!node_modules/robotjs/build/**/.deps/**",
+      "!node_modules/robotjs/build/**/obj.target/**"
     ],
     "mac": {
       "category": "public.app-category.productivity",
