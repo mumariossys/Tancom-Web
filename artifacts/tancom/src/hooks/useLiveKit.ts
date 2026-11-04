@@ -8,17 +8,33 @@ import {
   RemoteTrack,
   ConnectionState,
   LocalParticipant,
-  VideoPresets,
   AudioPresets,
+  type TrackPublishOptions,
 } from "livekit-client";
+import {
+  decideScreenShare,
+  screenShareProfile,
+  type ScreenShareHold,
+} from "@/lib/screenShare";
 
 export interface RemoteStream {
   userId: string;
-  /** null when the participant has both camera and mic off */
+  /** null when the participant has no video to show (camera off, or a paused share) */
   stream: MediaStream | null;
   cameraStream?: MediaStream | null;
+  /** Microphone plus screen-share audio. Played on an <audio> element, not the video. */
   audioStream: MediaStream | null;
+  /** Identity of the video tracks. Stable while the picture itself has not changed. */
+  videoKey: string;
+  audioKey: string;
   isScreenShare: boolean;
+  /** Why a live share is not showing frames. Null while the picture is playing. */
+  screenShareHold: ScreenShareHold;
+}
+
+export interface ScreenSharePublishOptions {
+  audioTrack?: MediaStreamTrack | null;
+  optimizeForVideo?: boolean;
 }
 
 export interface ChatMessage {
@@ -44,6 +60,18 @@ export interface RoleChangeMessage {
 
 const decoder = new TextDecoder();
 const encoder = new TextEncoder();
+
+/** Add and remove tracks without creating a new MediaStream (which would reset the element). */
+function replaceTracks(stream: MediaStream, tracks: MediaStreamTrack[]): MediaStream | null {
+  const next = new Set(tracks);
+  for (const existing of stream.getTracks()) {
+    if (!next.has(existing)) stream.removeTrack(existing);
+  }
+  for (const track of tracks) {
+    if (!stream.getTracks().includes(track)) stream.addTrack(track);
+  }
+  return stream.getTracks().length > 0 ? stream : null;
+}
 
 /** How long to wait for a host response before expiring a pending RC request. */
 const RC_REQUEST_TIMEOUT_MS = 60_000;
@@ -92,6 +120,7 @@ export function useLiveKit({
   onRcRequestTimeout,
   onRcGrantedByBrowserHost,
   onRcDenied,
+  onScreenShareInterrupted,
   maxParticipants,
 }: {
   roomId: string;
@@ -114,6 +143,8 @@ export function useLiveKit({
    *  RC event routing will work but no real OS cursor/keyboard actions will execute on the host. */
   onRcGrantedByBrowserHost?: () => void;
   onRcDenied?: () => void;
+  /** The local screen share could not be restored after a drop. */
+  onScreenShareInterrupted?: () => void;
   /** When set, the LiveKit room is created with this hard cap before the first token is issued. */
   maxParticipants?: number;
 }) {
@@ -131,6 +162,7 @@ export function useLiveKit({
   const onRcRequestTimeoutRef = useRef(onRcRequestTimeout);
   const onRcGrantedByBrowserHostRef = useRef(onRcGrantedByBrowserHost);
   const onRcDeniedRef = useRef(onRcDenied);
+  const onScreenShareInterruptedRef = useRef(onScreenShareInterrupted);
   useEffect(() => { onChatRef.current = onChatMessage; }, [onChatMessage]);
   useEffect(() => { onReactionRef.current = onReaction; }, [onReaction]);
   useEffect(() => { onRoleChangeRef.current = onRoleChange; }, [onRoleChange]);
@@ -144,6 +176,7 @@ export function useLiveKit({
   useEffect(() => { onRcRequestTimeoutRef.current = onRcRequestTimeout; }, [onRcRequestTimeout]);
   useEffect(() => { onRcGrantedByBrowserHostRef.current = onRcGrantedByBrowserHost; }, [onRcGrantedByBrowserHost]);
   useEffect(() => { onRcDeniedRef.current = onRcDenied; }, [onRcDenied]);
+  useEffect(() => { onScreenShareInterruptedRef.current = onScreenShareInterrupted; }, [onScreenShareInterrupted]);
 
   // Mirror localStream in a ref so the main connection effect does not restart
   // the entire room when the camera stream is replaced (e.g. virtual background).
@@ -221,9 +254,27 @@ export function useLiveKit({
   useEffect(() => { haveControlRef.current = haveControl; }, [haveControl]);
   useEffect(() => { rcPausedRef.current = rcPaused; }, [rcPaused]);
 
+  // One MediaStream per kind per participant. Replacing srcObject on every
+  // track event (someone mutes, a caption, a second participant joins) restarts
+  // the <video> element and flashes a black frame. Sync tracks in place instead.
+  const mediaPoolsRef = useRef<Map<string, { video: MediaStream; audio: MediaStream; camera: MediaStream }>>(new Map());
+
+  // Local screen-share session. Survives a LiveKit reconnect so the same
+  // capture can be published again instead of leaving the sharer "live" with
+  // nobody receiving frames.
+  const screenGenRef = useRef(0);
+  const screenSessionRef = useRef<{
+    generation: number;
+    video: MediaStreamTrack;
+    audio: MediaStreamTrack | null;
+    optimizeForVideo: boolean;
+  } | null>(null);
+  const republishScreenShareRef = useRef<() => Promise<void>>(async () => {});
+
   const buildStreams = useCallback((room: Room) => {
     const myId = userIdRef.current;
     const streams: RemoteStream[] = [];
+    const seen = new Set<string>();
     room.remoteParticipants.forEach((participant) => {
       // Skip stale self-connections — the same Clerk user can appear as a
       // "remote" participant with a different nanoid suffix during the brief
@@ -233,32 +284,65 @@ export function useLiveKit({
       // We read userId from a ref so this callback stays stable (empty dep array)
       // and never causes the main room effect to restart.
       if (myId && participant.identity.startsWith(myId + "-")) return;
+      seen.add(participant.identity);
 
       const screenSharePub = participant.getTrackPublication(Track.Source.ScreenShare);
       const cameraPub = participant.getTrackPublication(Track.Source.Camera);
-      const audioTrack = participant.getTrackPublication(Track.Source.Microphone);
-      const videoTrack = screenSharePub ?? cameraPub;
+      const micPub = participant.getTrackPublication(Track.Source.Microphone);
+      const screenAudioPub = participant.getTrackPublication(Track.Source.ScreenShareAudio);
 
-      const tracks: MediaStreamTrack[] = [];
-      if (videoTrack?.track) tracks.push(videoTrack.track.mediaStreamTrack);
-      if (audioTrack?.track) tracks.push(audioTrack.track.mediaStreamTrack);
+      const screenMedia = screenSharePub?.track?.mediaStreamTrack ?? null;
+      const decision = decideScreenShare({
+        hasPublication: !!screenSharePub,
+        trackReadyState: !screenMedia ? "missing" : screenMedia.readyState === "live" ? "live" : "ended",
+        publicationMuted: !!screenSharePub?.isMuted,
+        trackMuted: !!screenMedia?.muted,
+        streamPaused: screenSharePub?.track?.streamState === Track.StreamState.Paused,
+      });
 
-      // Always include every participant in the grid — even those with camera/mic
-      // off (tracks.length === 0). They appear as avatar tiles rather than video.
-      // Omitting them caused the web to show fewer participants than iOS/Android.
-      const ms = tracks.length > 0 ? new MediaStream(tracks) : null;
-      // When screen sharing, also capture their camera as a separate stream
-      const cameraStream = (screenSharePub?.track && cameraPub?.track)
-        ? new MediaStream([cameraPub.track.mediaStreamTrack])
-        : null;
+      const cameraMedia = cameraPub?.track?.mediaStreamTrack ?? null;
+      const cameraLive = cameraMedia && cameraMedia.readyState === "live" ? cameraMedia : null;
+
+      // A muted or not-yet-subscribed screen track must not become the picture:
+      // the element would show black and hide this person's camera. While the
+      // publication is still up we keep the share session (decision.active) and
+      // tell the UI to show paused / reconnecting instead.
+      const showScreenFrames = decision.active && decision.hold !== "sender" && !!screenMedia && screenMedia.readyState === "live";
+      const videoTracks: MediaStreamTrack[] = [];
+      if (showScreenFrames && screenMedia) videoTracks.push(screenMedia);
+      else if (!decision.active && cameraLive) videoTracks.push(cameraLive);
+
+      const audioTracks: MediaStreamTrack[] = [];
+      const micMedia = micPub?.track?.mediaStreamTrack ?? null;
+      if (micMedia && micMedia.readyState === "live" && !micPub?.isMuted && !micMedia.muted) {
+        audioTracks.push(micMedia);
+      }
+      const sysMedia = screenAudioPub?.track?.mediaStreamTrack ?? null;
+      if (sysMedia && sysMedia.readyState === "live" && !screenAudioPub?.isMuted && !sysMedia.muted) {
+        audioTracks.push(sysMedia);
+      }
+
+      let pools = mediaPoolsRef.current.get(participant.identity);
+      if (!pools) {
+        pools = { video: new MediaStream(), audio: new MediaStream(), camera: new MediaStream() };
+        mediaPoolsRef.current.set(participant.identity, pools);
+      }
+
+      const cameraTracks = decision.active && cameraLive ? [cameraLive] : [];
       streams.push({
         userId: participant.identity,
-        stream: ms,
-        cameraStream,
-        audioStream: null,
-        isScreenShare: !!screenSharePub?.track,
+        stream: replaceTracks(pools.video, videoTracks),
+        cameraStream: replaceTracks(pools.camera, cameraTracks),
+        audioStream: replaceTracks(pools.audio, audioTracks),
+        videoKey: videoTracks.map((t) => t.id).join(","),
+        audioKey: audioTracks.map((t) => t.id).join(","),
+        isScreenShare: decision.active,
+        screenShareHold: decision.hold,
       });
     });
+    for (const id of mediaPoolsRef.current.keys()) {
+      if (!seen.has(id)) mediaPoolsRef.current.delete(id);
+    }
     setRemoteStreams(streams);
   }, []);
 
@@ -327,18 +411,22 @@ export function useLiveKit({
 
     const onDisconnected = () => {
       setWsConnected(false);
-      setIsReconnecting(false);
       setRemoteStreams([]);
+      mediaPoolsRef.current.clear();
       setPeerIds([]);
       setPeerNames(new Map());
       // Auto-reconnect: if the room had already connected successfully and the
-      // disconnect was unexpected (not triggered by effect cleanup / leave), wait
-      // 5 s then attempt a full reconnect with a fresh token.  The `active` guard
-      // prevents firing after the component unmounts or the meeting ends.
+      // disconnect was unexpected (not triggered by effect cleanup / leave),
+      // keep the "reconnecting" banner up and try again. LiveKit has already
+      // exhausted its own brief-drop recovery before Disconnected fires.
+      // The `active` guard prevents firing after unmount or after the meeting ends.
       if (active && hadConnected) {
+        setIsReconnecting(true);
         setTimeout(() => {
           if (active && connectWithRetryFn) void connectWithRetryFn(0);
-        }, 5_000);
+        }, 1_500);
+      } else {
+        setIsReconnecting(false);
       }
     };
 
@@ -615,7 +703,13 @@ export function useLiveKit({
       setIsReconnecting(false);
       buildPeerMeta(room);
       buildStreams(room);
+      // Publications are gone after a full restart. Put the screen share back
+      // if the capture track is still live, so viewers don't sit on a black tile
+      // while the sharer still thinks they are presenting.
+      void republishScreenShareRef.current();
     };
+
+    const refreshStreams = () => buildStreams(room);
 
     room
       .on(RoomEvent.Connected, onConnected)
@@ -626,6 +720,11 @@ export function useLiveKit({
       .on(RoomEvent.ParticipantDisconnected, onParticipantDisconnected)
       .on(RoomEvent.TrackSubscribed, onTrackSubscribed)
       .on(RoomEvent.TrackUnsubscribed, onTrackUnsubscribed)
+      .on(RoomEvent.TrackPublished, refreshStreams)
+      .on(RoomEvent.TrackUnpublished, refreshStreams)
+      .on(RoomEvent.TrackMuted, refreshStreams)
+      .on(RoomEvent.TrackUnmuted, refreshStreams)
+      .on(RoomEvent.TrackStreamStateChanged, refreshStreams)
       .on(RoomEvent.DataReceived, onDataReceived);
 
     let active = true;
@@ -675,6 +774,10 @@ export function useLiveKit({
           // Signal that the camera publication now exists — safe to replaceTrack.
           if (active) setTracksPublished(true);
         }
+        if (active) {
+          setIsReconnecting(false);
+          await republishScreenShareRef.current();
+        }
       } catch (err) {
         if (!active) return;
         const errMsg = err instanceof Error ? err.message : String(err);
@@ -700,6 +803,7 @@ export function useLiveKit({
         if (isNotAdmitted) {
           console.error("LiveKit token denied (403) — user not an admitted participant:", err);
           setWsConnected(false);
+          setIsReconnecting(false);
           setConnectionError("__not_admitted__");
           return;
         }
@@ -712,6 +816,7 @@ export function useLiveKit({
         } else {
           console.error("LiveKit connection failed after all retries:", err);
           setWsConnected(false);
+          setIsReconnecting(false);
           // Surface a user-readable message. errCode=1 from LiveKit is
           // ServerUnreachable — commonly caused by a rate limit (HTTP 429) or
           // the LiveKit project being over its plan limits.
@@ -739,7 +844,9 @@ export function useLiveKit({
       rcRequestedAtRef.current = null;
       room.disconnect();
       roomRef.current = null;
+      mediaPoolsRef.current.clear();
       setWsConnected(false);
+      setIsReconnecting(false);
       setTracksPublished(false);
       setRemoteStreams([]);
       setPeerIds([]);
@@ -968,31 +1075,140 @@ export function useLiveKit({
     sendData({ type: "rc-clipboard-pull" });
   }, [sendData]);
 
-  const publishScreenShare = useCallback(async (track: MediaStreamTrack) => {
+  const dropPublishedScreen = useCallback(async (video: MediaStreamTrack, audio: MediaStreamTrack | null) => {
     const room = roomRef.current;
     if (!room) return;
-    await room.localParticipant.publishTrack(track, {
-      source: Track.Source.ScreenShare,
-      videoEncoding: {
-        // Screen content at 1080p needs headroom for text clarity.
-        // 3 Mbps is more realistic than 6 Mbps for actual VP8/VP9 throughput.
-        maxBitrate: 3_000_000,
-        maxFramerate: 30,
-      },
-      // L1T3 temporal scalability: the sender produces 3 temporal layers
-      // (30 / 15 / 7.5 fps) so receivers on poor connections drop to a lower
-      // framerate without losing resolution — text stays readable.
-      scalabilityMode: "L1T3",
-      videoSimulcastLayers: [],
-    });
+    const videoPub = room.localParticipant.getTrackPublication(Track.Source.ScreenShare);
+    if (videoPub?.track?.mediaStreamTrack === video) {
+      await room.localParticipant.unpublishTrack(videoPub.track);
+    }
+    const audioPub = room.localParticipant.getTrackPublication(Track.Source.ScreenShareAudio);
+    if (audio && audioPub?.track?.mediaStreamTrack === audio) {
+      await room.localParticipant.unpublishTrack(audioPub.track);
+    }
   }, []);
 
-  const unpublishScreenShare = useCallback(async () => {
+  const publishScreenTracks = useCallback(async (
+    video: MediaStreamTrack,
+    audio: MediaStreamTrack | null,
+    optimizeForVideo: boolean,
+    generation: number,
+  ) => {
+    const stillCurrent = () => screenGenRef.current === generation;
     const room = roomRef.current;
-    if (!room) return;
-    const pub = room.localParticipant.getTrackPublication(Track.Source.ScreenShare);
-    if (pub?.track) {
-      await room.localParticipant.unpublishTrack(pub.track);
+    if (!stillCurrent()) return;
+    if (!room || room.state !== ConnectionState.Connected) {
+      throw new Error("Not connected to the meeting");
+    }
+    if (video.readyState !== "live") {
+      throw new Error("Screen capture has ended");
+    }
+    const profile = screenShareProfile(optimizeForVideo);
+    video.contentHint = profile.contentHint;
+
+    const videoOptions: TrackPublishOptions = {
+      source: Track.Source.ScreenShare,
+      // H.264 matches the room default so every client can decode the share.
+      // scalabilityMode L1T3 is VP8/VP9/AV1-only; pairing it with H.264 makes
+      // publishTrack reject and the share never leaves this machine.
+      videoCodec: "h264",
+      simulcast: false,
+      degradationPreference: profile.degradationPreference,
+      videoEncoding: {
+        maxBitrate: profile.maxBitrate,
+        maxFramerate: profile.maxFramerate,
+      },
+    };
+
+    const existingVideo = room.localParticipant.getTrackPublication(Track.Source.ScreenShare);
+    if (existingVideo?.track && existingVideo.track.mediaStreamTrack !== video) {
+      await room.localParticipant.unpublishTrack(existingVideo.track);
+    }
+    if (!stillCurrent()) return;
+    if (!existingVideo?.track || existingVideo.track.mediaStreamTrack !== video) {
+      await room.localParticipant.publishTrack(video, videoOptions);
+    }
+    if (!stillCurrent()) return;
+
+    const existingAudio = room.localParticipant.getTrackPublication(Track.Source.ScreenShareAudio);
+    if (audio && audio.readyState === "live") {
+      if (existingAudio?.track && existingAudio.track.mediaStreamTrack !== audio) {
+        await room.localParticipant.unpublishTrack(existingAudio.track);
+      }
+      if (!stillCurrent()) return;
+      if (!existingAudio?.track || existingAudio.track.mediaStreamTrack !== audio) {
+        try {
+          await room.localParticipant.publishTrack(audio, { source: Track.Source.ScreenShareAudio });
+        } catch (err) {
+          // The picture is the share. A missing system-audio track should not
+          // take the whole share down (the picker checkbox is optional).
+          console.warn("useLiveKit: screen share audio publish failed", err);
+        }
+      }
+    } else if (existingAudio?.track) {
+      await room.localParticipant.unpublishTrack(existingAudio.track);
+    }
+  }, []);
+
+  const publishScreenShare = useCallback(async (track: MediaStreamTrack, options?: ScreenSharePublishOptions) => {
+    const generation = ++screenGenRef.current;
+    const audio = options?.audioTrack && options.audioTrack.readyState === "live" ? options.audioTrack : null;
+    const optimizeForVideo = !!options?.optimizeForVideo;
+    screenSessionRef.current = { generation, video: track, audio, optimizeForVideo };
+    try {
+      await publishScreenTracks(track, audio, optimizeForVideo, generation);
+    } catch (err) {
+      if (screenSessionRef.current?.generation === generation) {
+        screenSessionRef.current = null;
+      }
+      throw err;
+    }
+    if (screenSessionRef.current?.generation !== generation) {
+      // Stop won the race — drop what we just published.
+      await dropPublishedScreen(track, audio);
+    }
+  }, [publishScreenTracks, dropPublishedScreen]);
+
+  const republishScreenShare = useCallback(async () => {
+    const session = screenSessionRef.current;
+    const room = roomRef.current;
+    if (!session || !room || room.state !== ConnectionState.Connected) return;
+    if (session.video.readyState !== "live") {
+      if (screenSessionRef.current?.generation === session.generation) {
+        screenSessionRef.current = null;
+      }
+      return;
+    }
+    try {
+      await publishScreenTracks(session.video, session.audio, session.optimizeForVideo, session.generation);
+    } catch (err) {
+      console.warn("useLiveKit: screen share republish failed", err);
+      if (screenSessionRef.current?.generation === session.generation) {
+        onScreenShareInterruptedRef.current?.();
+      }
+      return;
+    }
+    // Stop won the race while the republish was in flight.
+    if (screenSessionRef.current?.generation !== session.generation) {
+      await dropPublishedScreen(session.video, session.audio);
+    }
+  }, [publishScreenTracks, dropPublishedScreen]);
+  republishScreenShareRef.current = republishScreenShare;
+
+  const unpublishScreenShare = useCallback(async () => {
+    // Invalidate any in-flight publish/republish before awaiting network I/O.
+    screenGenRef.current += 1;
+    screenSessionRef.current = null;
+    const room = roomRef.current;
+    if (room) {
+      const videoPub = room.localParticipant.getTrackPublication(Track.Source.ScreenShare);
+      if (videoPub?.track) {
+        await room.localParticipant.unpublishTrack(videoPub.track);
+      }
+      const audioPub = room.localParticipant.getTrackPublication(Track.Source.ScreenShareAudio);
+      if (audioPub?.track) {
+        await room.localParticipant.unpublishTrack(audioPub.track);
+      }
     }
     setRcGrantedTo(null);
     setHaveControl(false);
@@ -1000,6 +1216,19 @@ export function useLiveKit({
     setRcRequests([]);
     sendData({ type: "rc-revoke" });
   }, [sendData]);
+
+  const startRoomAudio = useCallback(async () => {
+    const room = roomRef.current;
+    try {
+      await room?.startAudio();
+    } catch {
+      // Autoplay is still locked until the next gesture.
+    }
+    if (typeof document === "undefined") return;
+    document.querySelectorAll<HTMLMediaElement>("[data-remote-media]").forEach((el) => {
+      if (el.srcObject) void el.play().catch(() => {});
+    });
+  }, []);
 
   const sendChatMessage = useCallback((
     id: string, sender: string, senderId: string, text: string,
@@ -1043,6 +1272,7 @@ export function useLiveKit({
     replaceVideoTrack,
     publishScreenShare,
     unpublishScreenShare,
+    startRoomAudio,
     sendChatMessage,
     sendReaction,
     rename,

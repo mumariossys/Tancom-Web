@@ -211,8 +211,8 @@ try {
    * Tell the Electron main process which source was selected.
    * Pass `null` to cancel — getDisplayMedia() will reject.
    */
-  pickScreenSource(sourceId: string | null): void {
-    ipcRenderer.send("screen:pick-source", sourceId);
+  pickScreenSource(sourceId: string | null, withSystemAudio = false): void {
+    ipcRenderer.send("screen:pick-source", sourceId, withSystemAudio);
   },
 });
   console.log("[TanCom Desktop] preload: window.electronRC injected ✓");
