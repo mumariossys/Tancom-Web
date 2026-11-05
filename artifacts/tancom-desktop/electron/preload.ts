@@ -214,6 +214,19 @@ try {
   pickScreenSource(sourceId: string | null, withSystemAudio = false): void {
     ipcRenderer.send("screen:pick-source", sourceId, withSystemAudio);
   },
+
+  /**
+   * Fires when macOS screen capture cannot start (permission, empty list, or
+   * desktopCapturer timed out). `getDisplayMedia()` rejects as a cancel; this
+   * is the reason to show the user.
+   */
+  onScreenCaptureDenied(callback: (reason: "permission" | "empty" | "timeout") => void): () => void {
+    const handler = (_event: Electron.IpcRendererEvent, reason: "permission" | "empty" | "timeout") => {
+      callback(reason);
+    };
+    ipcRenderer.on("screen:capture-denied", handler);
+    return () => { ipcRenderer.off("screen:capture-denied", handler); };
+  },
 });
   console.log("[TanCom Desktop] preload: window.electronRC injected ✓");
 } catch (err) {

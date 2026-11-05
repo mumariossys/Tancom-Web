@@ -34,6 +34,12 @@
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "assets/icon.icns",
+      "extendInfo": {
+        "NSScreenCaptureUsageDescription": "TanCom shares your screen during meetings. macOS requires Screen Recording permission.",
+        "NSCameraUsageDescription": "TanCom uses the camera for meeting video.",
+        "NSMicrophoneUsageDescription": "TanCom uses the microphone for meeting audio.",
+        "NSAudioCaptureUsageDescription": "TanCom uses system audio when you choose to share computer sound."
+      },
       "target": [
         { "target": "dmg", "arch": ["x64", "arm64"] }
       ]

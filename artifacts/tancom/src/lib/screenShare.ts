@@ -23,11 +23,24 @@ export function decideScreenShare(input: {
   publicationMuted: boolean;
   trackMuted: boolean;
   streamPaused: boolean;
+  /**
+   * The sharer said the share stopped, or this exact capture track already
+   * fired `ended`. macOS can leave the publication looking live and unmuted
+   * while the stage is a black frame.
+   */
+  forceEnded?: boolean;
+  /**
+   * A live screen track was already on screen. Once that track disappears,
+   * the share is over. The first subscribe still has a gap before the track
+   * is attached; that gap is not an end.
+   */
+  hadLiveTrack?: boolean;
 }): ScreenShareDecision {
-  if (!input.hasPublication || input.trackReadyState === "ended") {
+  if (input.forceEnded || !input.hasPublication || input.trackReadyState === "ended") {
     return { active: false, hold: null };
   }
   if (input.trackReadyState !== "live") {
+    if (input.hadLiveTrack) return { active: false, hold: null };
     return { active: true, hold: "link" };
   }
   if (input.publicationMuted || input.trackMuted) {

@@ -13,14 +13,38 @@ describe("decideScreenShare", () => {
     }), { active: false, hold: null });
   });
 
-  it("keeps the session when the track drops briefly instead of treating it as ended", () => {
+  it("keeps the session only while the first track is still attaching", () => {
     assert.deepEqual(decideScreenShare({
       hasPublication: true,
       trackReadyState: "missing",
       publicationMuted: false,
       trackMuted: false,
       streamPaused: false,
+      hadLiveTrack: false,
     }), { active: true, hold: "link" });
+  });
+
+  it("ends the session when a track that was already live disappears", () => {
+    assert.deepEqual(decideScreenShare({
+      hasPublication: true,
+      trackReadyState: "missing",
+      publicationMuted: false,
+      trackMuted: false,
+      streamPaused: false,
+      hadLiveTrack: true,
+    }), { active: false, hold: null });
+  });
+
+  it("ends the session when the sharer signals stop even if the track still looks live", () => {
+    assert.deepEqual(decideScreenShare({
+      hasPublication: true,
+      trackReadyState: "live",
+      publicationMuted: false,
+      trackMuted: false,
+      streamPaused: false,
+      forceEnded: true,
+      hadLiveTrack: true,
+    }), { active: false, hold: null });
   });
 
   it("ends the session when the capture track has ended", () => {

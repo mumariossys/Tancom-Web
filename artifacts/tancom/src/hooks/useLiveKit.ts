@@ -270,6 +270,13 @@ export function useLiveKit({
     optimizeForVideo: boolean;
   } | null>(null);
   const republishScreenShareRef = useRef<() => Promise<void>>(async () => {});
+  // Viewer's own screen-track id to hide, keyed by participant. The sender's
+  // MediaStreamTrack id is a different string and must not be compared here.
+  // `null` means "the share ended before we could read the current track".
+  const suppressedScreenTrackRef = useRef<Map<string, string | null>>(new Map());
+  const screenShareWasLiveRef = useRef<Set<string>>(new Set());
+  const hookedScreenTracksRef = useRef<WeakSet<MediaStreamTrack>>(new WeakSet());
+  const buildStreamsRef = useRef<(room: Room) => void>(() => {});
 
   const buildStreams = useCallback((room: Room) => {
     const myId = userIdRef.current;
@@ -292,13 +299,45 @@ export function useLiveKit({
       const screenAudioPub = participant.getTrackPublication(Track.Source.ScreenShareAudio);
 
       const screenMedia = screenSharePub?.track?.mediaStreamTrack ?? null;
+      if (screenMedia && !hookedScreenTracksRef.current.has(screenMedia)) {
+        hookedScreenTracksRef.current.add(screenMedia);
+        const identity = participant.identity;
+        screenMedia.addEventListener("ended", () => {
+          suppressedScreenTrackRef.current.set(identity, screenMedia.id);
+          buildStreamsRef.current(room);
+        }, { once: true });
+      }
+      const hadLiveTrack = screenShareWasLiveRef.current.has(participant.identity);
+      let forceEnded = false;
+      if (suppressedScreenTrackRef.current.has(participant.identity)) {
+        const suppressedId = suppressedScreenTrackRef.current.get(participant.identity) ?? null;
+        const liveAgain = !!screenMedia && screenMedia.readyState === "live" && screenMedia.id !== suppressedId;
+        if (liveAgain && suppressedId !== null) {
+          // A different track than the one that stopped: they shared again.
+          suppressedScreenTrackRef.current.delete(participant.identity);
+        } else if (liveAgain && suppressedId === null && !hadLiveTrack) {
+          suppressedScreenTrackRef.current.delete(participant.identity);
+        } else {
+          if (suppressedId === null && screenMedia && hadLiveTrack) {
+            suppressedScreenTrackRef.current.set(participant.identity, screenMedia.id);
+          }
+          forceEnded = true;
+        }
+      }
       const decision = decideScreenShare({
         hasPublication: !!screenSharePub,
         trackReadyState: !screenMedia ? "missing" : screenMedia.readyState === "live" ? "live" : "ended",
         publicationMuted: !!screenSharePub?.isMuted,
         trackMuted: !!screenMedia?.muted,
         streamPaused: screenSharePub?.track?.streamState === Track.StreamState.Paused,
+        forceEnded,
+        hadLiveTrack,
       });
+      if (screenMedia?.readyState === "live" && !forceEnded) {
+        screenShareWasLiveRef.current.add(participant.identity);
+      } else if (!screenSharePub && !suppressedScreenTrackRef.current.has(participant.identity)) {
+        screenShareWasLiveRef.current.delete(participant.identity);
+      }
 
       const cameraMedia = cameraPub?.track?.mediaStreamTrack ?? null;
       const cameraLive = cameraMedia && cameraMedia.readyState === "live" ? cameraMedia : null;
@@ -345,6 +384,7 @@ export function useLiveKit({
     }
     setRemoteStreams(streams);
   }, []);
+  buildStreamsRef.current = buildStreams;
 
   const buildPeerMeta = useCallback((room: Room) => {
     const myId = userIdRef.current;
@@ -674,6 +714,18 @@ export function useLiveKit({
             setRcClipboardData({ text, ts: Date.now() });
           }
 
+        } else if (type === "screen-share-ended") {
+          // Reliable signal from the sharer. On macOS the remote capture can
+          // stay "live" and unmuted, which leaves the banner, the black stage,
+          // and Request Control up. The sender's track id does not match the
+          // id on this machine, so remember the track we are actually showing.
+          const identity = (typeof msg["identity"] === "string" && msg["identity"]) || participant?.identity || "";
+          if (identity) {
+            const remote = room.remoteParticipants.get(identity) ?? (participant?.identity === identity ? participant : undefined);
+            const currentId = remote?.getTrackPublication(Track.Source.ScreenShare)?.track?.mediaStreamTrack?.id ?? null;
+            suppressedScreenTrackRef.current.set(identity, currentId);
+          }
+          buildStreams(room);
         } else if (type === "force-action") {
           const targetId = msg["targetId"] as string;
           const action = msg["action"] as string;
@@ -1202,6 +1254,9 @@ export function useLiveKit({
     const room = roomRef.current;
     if (room) {
       const videoPub = room.localParticipant.getTrackPublication(Track.Source.ScreenShare);
+      // Tell viewers before the unpublish. On macOS the remote track can keep
+      // looking live after the publication should be gone.
+      sendData({ type: "screen-share-ended", identity: room.localParticipant.identity });
       if (videoPub?.track) {
         await room.localParticipant.unpublishTrack(videoPub.track);
       }

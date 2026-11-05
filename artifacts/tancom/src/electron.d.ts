@@ -143,6 +143,14 @@ interface ElectronRC {
    * `withSystemAudio` captures the desktop mix when Share computer sound is on.
    */
   pickScreenSource(sourceId: string | null, withSystemAudio?: boolean): void;
+
+  /**
+   * macOS screen capture failed before a source could be chosen.
+   * `permission` — Screen Recording is off or not yet granted.
+   * `empty` — the capturer returned no screens or windows.
+   * `timeout` — desktopCapturer did not answer.
+   */
+  onScreenCaptureDenied(callback: (reason: "permission" | "empty" | "timeout") => void): () => void;
 }
 
 interface Window {
