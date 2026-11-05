@@ -1,5 +1,6 @@
-import { app, BrowserWindow, ipcMain, Menu, shell, session, clipboard, desktopCapturer } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, shell, session, clipboard, desktopCapturer, systemPreferences, dialog } from "electron";
 import path from "path";
+import { classifyScreenAccess, loopbackAudioSupported, type ScreenCaptureDenial } from "./screenCapturePolicy";
 
 // robotjs ships prebuilt native binaries for Windows/macOS/Linux.
 // Types are provided by electron/robotjs.d.ts (no @types package needed).
@@ -50,8 +51,10 @@ let pendingDisplayCallback: ((response: any) => void) | null = null;
 let pendingAudioRequested = false;
 let cachedDesktopSources: Electron.DesktopCapturerSource[] = [];
 
+type DisplayMediaCallback = (response: { video?: Electron.DesktopCapturerSource; audio?: "loopback" }) => void;
+
 function finishDisplayRequest(
-  cb: (response: { video?: Electron.DesktopCapturerSource; audio?: "loopback" }) => void,
+  cb: DisplayMediaCallback,
   source: Electron.DesktopCapturerSource | undefined,
   withAudio: boolean,
 ) {
@@ -61,7 +64,73 @@ function finishDisplayRequest(
   }
   // loopback is the system mix. Only attach it when the sharer asked for
   // computer audio — otherwise the meeting hears the whole desktop.
-  cb(withAudio ? { video: source, audio: "loopback" } : { video: source });
+  // Electron 28 implements that flag on Windows only. On macOS it rejects the
+  // whole request, so Share appears to do nothing.
+  const audio = withAudio && loopbackAudioSupported(process.platform);
+  cb(audio ? { video: source, audio: "loopback" } : { video: source });
+}
+
+function readMacScreenStatus(): string | null {
+  if (process.platform !== "darwin") return "granted";
+  try {
+    return systemPreferences.getMediaAccessStatus("screen");
+  } catch {
+    return null;
+  }
+}
+
+let lastMacPermissionDialogAt = 0;
+
+function explainMacScreenPermission(): void {
+  const now = Date.now();
+  if (now - lastMacPermissionDialogAt < 4000) return;
+  lastMacPermissionDialogAt = now;
+  void dialog.showMessageBox({
+    type: "warning",
+    title: "Screen Recording permission",
+    message: "TanCom needs Screen Recording permission to share your screen.",
+    detail: "Turn on TanCom under System Settings → Privacy & Security → Screen Recording, then quit TanCom and open it again. macOS does not apply this permission until the app restarts.",
+    buttons: ["Open Screen Recording Settings", "Not now"],
+    defaultId: 0,
+    cancelId: 1,
+  }).then(({ response }) => {
+    if (response !== 0) return;
+    void shell.openExternal("x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture");
+  });
+}
+
+function notifyCaptureDenied(reason: ScreenCaptureDenial): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.webContents.send("screen:capture-denied", reason);
+}
+
+function failDisplayRequest(callback: DisplayMediaCallback, reason: ScreenCaptureDenial): void {
+  if (pendingDisplayCallback !== callback) return;
+  pendingDisplayCallback = null;
+  if (process.platform === "darwin") explainMacScreenPermission();
+  notifyCaptureDenied(reason);
+  try { callback({}); } catch { /* the page treats an empty grant as a cancel */ }
+}
+
+function primeMacScreenCapture(): void {
+  if (classifyScreenAccess(process.platform, readMacScreenStatus()) === "granted") return;
+  // Ask macOS to list TanCom under Screen Recording. Doing this inside the
+  // getDisplayMedia handler can hang that call until the user flips the switch.
+  void desktopCapturer.getSources({
+    types: ["screen"],
+    thumbnailSize: { width: 1, height: 1 },
+    fetchWindowIcons: false,
+  }).catch((err: unknown) => {
+    console.error("[TanCom Desktop] screen-capture preflight failed:", err);
+  });
+}
+
+function thumbnailURL(source: Electron.DesktopCapturerSource): string {
+  try {
+    return source.thumbnail.isEmpty() ? "" : source.thumbnail.toDataURL();
+  } catch {
+    return "";
+  }
 }
 
 function setupDisplayMedia() {
@@ -73,7 +142,22 @@ function setupDisplayMedia() {
       try { stale({}); } catch { /* ignore */ }
     }
     pendingDisplayCallback = callback;
-    pendingAudioRequested = Boolean((request as { audioRequested?: boolean }).audioRequested);
+    const audioRequested = Boolean((request as { audioRequested?: boolean }).audioRequested);
+    pendingAudioRequested = loopbackAudioSupported(process.platform) && audioRequested;
+
+    const access = classifyScreenAccess(process.platform, readMacScreenStatus());
+    if (access === "blocked") {
+      // getSources() on macOS can stay pending forever when Screen Recording
+      // is denied, which leaves the Share button dead.
+      failDisplayRequest(callback, "permission");
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      if (pendingDisplayCallback !== callback) return;
+      console.error("[TanCom Desktop] desktopCapturer.getSources timed out");
+      failDisplayRequest(callback, "timeout");
+    }, 15000);
 
     desktopCapturer
       .getSources({
@@ -82,25 +166,35 @@ function setupDisplayMedia() {
         fetchWindowIcons: false,
       })
       .then((sources) => {
+        clearTimeout(timer);
         cachedDesktopSources = sources;
         // A pick, cancel, or newer request already settled this callback.
         if (pendingDisplayCallback !== callback) return;
-        if (!mainWindow) {
-          pendingDisplayCallback = null;
-          callback({});
+        if (!mainWindow || mainWindow.isDestroyed() || sources.length === 0) {
+          failDisplayRequest(callback, "empty");
+          return;
+        }
+        // Without Screen Recording, macOS still returns sources whose thumbnails
+        // are empty. Choosing one makes getDisplayMedia fail with no picker.
+        const thumbnailsBlank = sources.every((source) => {
+          try { return source.thumbnail.isEmpty(); } catch { return true; }
+        });
+        if (process.platform === "darwin" && access !== "granted" && thumbnailsBlank) {
+          failDisplayRequest(callback, "permission");
           return;
         }
         const serialized = sources.map((s) => ({
           id: s.id,
           name: s.name,
-          thumbnail: s.thumbnail.toDataURL(),
+          thumbnail: thumbnailURL(s),
         }));
         mainWindow.webContents.send("screen:sources-ready", serialized);
       })
-      .catch(() => {
+      .catch((err: unknown) => {
+        clearTimeout(timer);
         if (pendingDisplayCallback !== callback) return;
-        pendingDisplayCallback = null;
-        callback({});
+        console.error("[TanCom Desktop] desktopCapturer.getSources failed:", err);
+        failDisplayRequest(callback, access === "granted" ? "empty" : "permission");
       });
   });
 
@@ -147,6 +241,8 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       webSecurity: true,
+      // Timers and track events keep running when the meeting window is in the background.
+      backgroundThrottling: false,
     },
   });
 
@@ -422,6 +518,7 @@ ipcMain.on("rc:stop-cursor-tracking", () => {
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 app.whenReady().then(() => {
   setupDisplayMedia();
+  primeMacScreenCapture();
   buildMenu();
   createWindow();
 

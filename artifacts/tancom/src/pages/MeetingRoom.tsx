@@ -2592,12 +2592,31 @@ export default function MeetingRoomPage() {
   // which calls pickScreenSource(id) → main calls callback({ video: source })
   // → getDisplayMedia() resolves and startScreenShare() continues normally.
   useEffect(() => {
-    if (!window.electronRC) return;
-    const unsub = window.electronRC.onScreenSourcesReady((sources) => {
+    const erc = window.electronRC;
+    if (!erc) return;
+    const unsubSources = erc.onScreenSourcesReady((sources) => {
       setScreenPickerSources(sources);
     });
-    return unsub;
-  }, []);
+    const unsubDenied = erc.onScreenCaptureDenied?.((reason) => {
+      sharingInProgressRef.current = false;
+      setScreenPickerSources(null);
+      const onMac = /Mac/.test(navigator.platform) || /Mac OS/.test(navigator.userAgent);
+      const description = onMac
+        ? "Turn on TanCom in System Settings → Privacy & Security → Screen Recording, then quit and reopen TanCom."
+        : reason === "empty"
+          ? "No screen or window was available to share."
+          : "Screen capture didn't start. Try Share again.";
+      toast({
+        title: "Couldn't start screen share",
+        description,
+        variant: "destructive",
+      });
+    });
+    return () => {
+      unsubSources();
+      unsubDenied?.();
+    };
+  }, [toast]);
 
   const handleScreenPickerSelect = useCallback((sourceId: string) => {
     window.electronRC?.pickScreenSource(sourceId, shareComputerSound);
