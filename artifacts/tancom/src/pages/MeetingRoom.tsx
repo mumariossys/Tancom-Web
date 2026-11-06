@@ -1209,6 +1209,12 @@ export default function MeetingRoomPage() {
   const screenStreamRef = useRef<MediaStream | null>(null);
   // Guard: prevents getDisplayMedia from being called while already in-flight
   const sharingInProgressRef = useRef(false);
+  // Synchronous claim so two Share clicks cannot both pass the guard.
+  const startClaimRef = useRef(false);
+  // The in-flight Stop. The next share waits for it so Windows (Desktop
+  // Duplication) and macOS (ScreenCaptureKit) are not asked for a second
+  // capture while the first track is still live.
+  const stopInFlightRef = useRef<Promise<void> | null>(null);
   // Stop and a newer start advance this so a publish that resolves late cannot
   // paint "You are sharing your screen" again.
   const shareEpochRef = useRef(0);
@@ -2183,17 +2189,17 @@ export default function MeetingRoomPage() {
   const handleLeave = () => { localStreamRef.current?.getTracks().forEach(t => t.stop()); setLocation("/meetings"); };
   const handleEnd = () => { localStreamRef.current?.getTracks().forEach(t => t.stop()); if (meeting) endMutation.mutate({ id: meeting.id }); };
 
-  // Chrome pauses remote media when a display capture starts or its track
-  // stops, and it does not resume them. Replay now (the click is still a
-  // gesture) and again shortly after, once the capture track is gone.
+  // Windows and macOS both pause remote playback when a display capture
+  // starts or its track stops, and neither resumes it. Replay on the click
+  // and again after the capture device has actually been released.
   const resumeRemoteAudio = useCallback(() => {
     void startRoomAudio();
-    window.setTimeout(() => { void startRoomAudio(); }, 300);
+    window.setTimeout(() => { void startRoomAudio(); }, 400);
+    window.setTimeout(() => { void startRoomAudio(); }, 1200);
   }, [startRoomAudio]);
 
   const stopSharing = useCallback(async () => {
     shareEpochRef.current += 1;
-    sharingInProgressRef.current = false;
     const captured = screenStreamRef.current;
 
     // Belt-and-suspenders: stop Electron cursor tracking immediately so no
@@ -2224,19 +2230,31 @@ export default function MeetingRoomPage() {
     // LiveKit send the proper "track removed" signal to all remote
     // participants.  If we stop() the track first, remotes get stuck on
     // a black tile until the WebRTC cleanup propagates.
-    // Don't wait forever: a hung unpublish would leave the capture live and
-    // Windows would keep the tab muted, so nobody else is audible.
+    // Don't wait forever: a hung unpublish would leave the capture live, and
+    // both Windows and macOS keep meeting audio muted while that track lives.
+    const prevStop = stopInFlightRef.current;
+    const run = (prevStop ?? Promise.resolve()).catch(() => {}).then(async () => {
+      try {
+        await Promise.race([
+          unpublishScreenShare(),
+          new Promise<void>((resolve) => { window.setTimeout(resolve, 1500); }),
+        ]);
+      } finally {
+        // ── Step 3: stop only the capture this stop started with ─────────
+        // A second share may already have replaced the ref.
+        if (screenStreamRef.current === captured) screenStreamRef.current = null;
+        captured?.getTracks().forEach(t => t.stop());
+        resumeRemoteAudio();
+      }
+    });
+    stopInFlightRef.current = run;
     try {
-      await Promise.race([
-        unpublishScreenShare(),
-        new Promise<void>((resolve) => { window.setTimeout(resolve, 1500); }),
-      ]);
+      await run;
     } finally {
-      // ── Step 3: stop only the capture this stop started with ───────────
-      // A second share may already have replaced the ref.
-      if (screenStreamRef.current === captured) screenStreamRef.current = null;
-      captured?.getTracks().forEach(t => t.stop());
-      resumeRemoteAudio();
+      if (stopInFlightRef.current === run) {
+        stopInFlightRef.current = null;
+        if (!startClaimRef.current) sharingInProgressRef.current = false;
+      }
     }
   }, [unpublishScreenShare, isElectronHost, resumeRemoteAudio]);
   useEffect(() => { stopSharingRef.current = () => { void stopSharing(); }; }, [stopSharing]);
@@ -2286,7 +2304,8 @@ export default function MeetingRoomPage() {
   };
 
   const startScreenShare = useCallback(async () => {
-    if (sharingInProgressRef.current) return;
+    if (startClaimRef.current || sharingInProgressRef.current) return;
+    startClaimRef.current = true;
     sharingInProgressRef.current = true;
     const epoch = shareEpochRef.current;
 
@@ -2299,6 +2318,16 @@ export default function MeetingRoomPage() {
     };
 
     try {
+      // Finish releasing the previous capture before asking the OS for another.
+      // A second getDisplayMedia while the first track is live leaves the
+      // banner stuck and drops remote audio on both Windows and macOS.
+      while (stopInFlightRef.current) {
+        const pending = stopInFlightRef.current;
+        await pending.catch(() => {});
+        if (stopInFlightRef.current === pending) break;
+      }
+      if (shareEpochRef.current !== epoch) return;
+
       // Keep getDisplayMedia options minimal — passing resolution/framerate
       // constraints into the picker can break Window and Entire Screen capture
       // on Windows (Desktop Duplication API rejects unsupported constraints).
@@ -2469,7 +2498,11 @@ export default function MeetingRoomPage() {
         variant: "destructive",
       });
     } finally {
-      if (shareEpochRef.current === epoch) sharingInProgressRef.current = false;
+      startClaimRef.current = false;
+      // Always release the slot. Stop may have advanced the epoch while this
+      // start was waiting; leaving the flag set would block the next share
+      // on either desktop.
+      sharingInProgressRef.current = false;
     }
   }, [publishScreenShare, unpublishScreenShare, optimizeForVideoClip, shareComputerSound, toast, resumeRemoteAudio]);
 
