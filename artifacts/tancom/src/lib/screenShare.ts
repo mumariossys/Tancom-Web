@@ -77,3 +77,18 @@ export function isScreenShareCancel(error: unknown): boolean {
       : "";
   return name === "NotAllowedError" || name === "AbortError";
 }
+
+/**
+ * The sharing banner is painted only after publish resolves. Stop, or the
+ * capture ending during that wait, must win — otherwise the UI stays on
+ * "You are sharing your screen" with Stop Share still showing.
+ */
+export function shouldCommitLocalScreenShare(input: {
+  /** Epoch captured when this start began. */
+  attempt: number;
+  /** Latest epoch. Stop, or a newer start, advances it. */
+  currentAttempt: number;
+  trackReadyState: "live" | "ended" | "missing";
+}): boolean {
+  return input.attempt === input.currentAttempt && input.trackReadyState === "live";
+}

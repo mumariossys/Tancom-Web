@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { decideScreenShare, screenShareProfile } from "./screenShare.ts";
+import { decideScreenShare, screenShareProfile, shouldCommitLocalScreenShare } from "./screenShare.ts";
 
 describe("decideScreenShare", () => {
   it("ignores a participant who is not sharing", () => {
@@ -89,5 +89,36 @@ describe("screenShareProfile", () => {
     assert.equal(motion.contentHint, "motion");
     assert.equal(motion.degradationPreference, "maintain-framerate");
     assert.ok(motion.maxBitrate > detail.maxBitrate);
+  });
+});
+
+describe("shouldCommitLocalScreenShare", () => {
+  it("commits when this start is still current and the capture is live", () => {
+    assert.equal(shouldCommitLocalScreenShare({
+      attempt: 2,
+      currentAttempt: 2,
+      trackReadyState: "live",
+    }), true);
+  });
+
+  it("does not commit after Stop advanced the epoch", () => {
+    assert.equal(shouldCommitLocalScreenShare({
+      attempt: 2,
+      currentAttempt: 3,
+      trackReadyState: "live",
+    }), false);
+  });
+
+  it("does not commit when the capture already ended or never arrived", () => {
+    assert.equal(shouldCommitLocalScreenShare({
+      attempt: 1,
+      currentAttempt: 1,
+      trackReadyState: "ended",
+    }), false);
+    assert.equal(shouldCommitLocalScreenShare({
+      attempt: 1,
+      currentAttempt: 1,
+      trackReadyState: "missing",
+    }), false);
   });
 });
