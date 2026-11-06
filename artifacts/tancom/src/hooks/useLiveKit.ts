@@ -1080,11 +1080,12 @@ export function useLiveKit({
     if (!room) return;
     const videoPub = room.localParticipant.getTrackPublication(Track.Source.ScreenShare);
     if (videoPub?.track?.mediaStreamTrack === video) {
-      await room.localParticipant.unpublishTrack(videoPub.track);
+      // Leave the capture running; the meeting page stops it after the UI clears.
+      await room.localParticipant.unpublishTrack(videoPub.track, false);
     }
     const audioPub = room.localParticipant.getTrackPublication(Track.Source.ScreenShareAudio);
     if (audio && audioPub?.track?.mediaStreamTrack === audio) {
-      await room.localParticipant.unpublishTrack(audioPub.track);
+      await room.localParticipant.unpublishTrack(audioPub.track, false);
     }
   }, []);
 
@@ -1103,6 +1104,16 @@ export function useLiveKit({
     if (video.readyState !== "live") {
       throw new Error("Screen capture has ended");
     }
+    // Stop can win while publishTrack is in flight. The publication then
+    // appears only after unpublish already looked, so drop it here.
+    const dropIfStale = async (source: Track.Source, media: MediaStreamTrack) => {
+      if (stillCurrent()) return false;
+      const pub = room.localParticipant.getTrackPublication(source);
+      if (pub?.track && pub.track.mediaStreamTrack === media) {
+        await room.localParticipant.unpublishTrack(pub.track, false);
+      }
+      return true;
+    };
     const profile = screenShareProfile(optimizeForVideo);
     video.contentHint = profile.contentHint;
 
@@ -1122,20 +1133,23 @@ export function useLiveKit({
 
     const existingVideo = room.localParticipant.getTrackPublication(Track.Source.ScreenShare);
     if (existingVideo?.track && existingVideo.track.mediaStreamTrack !== video) {
-      await room.localParticipant.unpublishTrack(existingVideo.track);
+      await room.localParticipant.unpublishTrack(existingVideo.track, false);
     }
-    if (!stillCurrent()) return;
+    if (await dropIfStale(Track.Source.ScreenShare, video)) return;
     if (!existingVideo?.track || existingVideo.track.mediaStreamTrack !== video) {
       await room.localParticipant.publishTrack(video, videoOptions);
     }
-    if (!stillCurrent()) return;
+    if (await dropIfStale(Track.Source.ScreenShare, video)) return;
 
     const existingAudio = room.localParticipant.getTrackPublication(Track.Source.ScreenShareAudio);
     if (audio && audio.readyState === "live") {
       if (existingAudio?.track && existingAudio.track.mediaStreamTrack !== audio) {
-        await room.localParticipant.unpublishTrack(existingAudio.track);
+        await room.localParticipant.unpublishTrack(existingAudio.track, false);
       }
-      if (!stillCurrent()) return;
+      if (await dropIfStale(Track.Source.ScreenShareAudio, audio)) {
+        await dropIfStale(Track.Source.ScreenShare, video);
+        return;
+      }
       if (!existingAudio?.track || existingAudio.track.mediaStreamTrack !== audio) {
         try {
           await room.localParticipant.publishTrack(audio, { source: Track.Source.ScreenShareAudio });
@@ -1145,8 +1159,15 @@ export function useLiveKit({
           console.warn("useLiveKit: screen share audio publish failed", err);
         }
       }
+      if (await dropIfStale(Track.Source.ScreenShareAudio, audio)) {
+        await dropIfStale(Track.Source.ScreenShare, video);
+        return;
+      }
     } else if (existingAudio?.track) {
-      await room.localParticipant.unpublishTrack(existingAudio.track);
+      await room.localParticipant.unpublishTrack(existingAudio.track, false);
+    }
+    if (await dropIfStale(Track.Source.ScreenShare, video)) {
+      if (audio) await dropIfStale(Track.Source.ScreenShareAudio, audio);
     }
   }, []);
 
@@ -1161,6 +1182,7 @@ export function useLiveKit({
       if (screenSessionRef.current?.generation === generation) {
         screenSessionRef.current = null;
       }
+      await dropPublishedScreen(track, audio);
       throw err;
     }
     if (screenSessionRef.current?.generation !== generation) {
@@ -1203,11 +1225,11 @@ export function useLiveKit({
     if (room) {
       const videoPub = room.localParticipant.getTrackPublication(Track.Source.ScreenShare);
       if (videoPub?.track) {
-        await room.localParticipant.unpublishTrack(videoPub.track);
+        await room.localParticipant.unpublishTrack(videoPub.track, false);
       }
       const audioPub = room.localParticipant.getTrackPublication(Track.Source.ScreenShareAudio);
       if (audioPub?.track) {
-        await room.localParticipant.unpublishTrack(audioPub.track);
+        await room.localParticipant.unpublishTrack(audioPub.track, false);
       }
     }
     setRcGrantedTo(null);
@@ -1218,16 +1240,23 @@ export function useLiveKit({
   }, [sendData]);
 
   const startRoomAudio = useCallback(async () => {
+    // Play before any await so a Stop/Share click's user activation still
+    // applies. getDisplayMedia pauses these elements, and waiting on
+    // startAudio() first drops the gesture.
+    const replay = () => {
+      if (typeof document === "undefined") return;
+      document.querySelectorAll<HTMLMediaElement>("[data-remote-media]").forEach((el) => {
+        if (el.srcObject) void el.play().catch(() => {});
+      });
+    };
+    replay();
     const room = roomRef.current;
     try {
       await room?.startAudio();
     } catch {
       // Autoplay is still locked until the next gesture.
     }
-    if (typeof document === "undefined") return;
-    document.querySelectorAll<HTMLMediaElement>("[data-remote-media]").forEach((el) => {
-      if (el.srcObject) void el.play().catch(() => {});
-    });
+    replay();
   }, []);
 
   const sendChatMessage = useCallback((

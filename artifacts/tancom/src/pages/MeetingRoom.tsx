@@ -31,7 +31,7 @@ import type { Participant, MeetingNote } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { useLiveKit, type RemoteStream } from "@/hooks/useLiveKit";
-import { isScreenShareCancel, screenShareProfile } from "@/lib/screenShare";
+import { isScreenShareCancel, screenShareProfile, shouldCommitLocalScreenShare } from "@/lib/screenShare";
 import { useCaptions } from "@/hooks/useCaptions";
 import {
   useVirtualBackground, getSavedBackground, saveBackground, type VirtualBg,
@@ -1209,6 +1209,15 @@ export default function MeetingRoomPage() {
   const screenStreamRef = useRef<MediaStream | null>(null);
   // Guard: prevents getDisplayMedia from being called while already in-flight
   const sharingInProgressRef = useRef(false);
+  // Synchronous claim so two Share clicks cannot both pass the guard.
+  const startClaimRef = useRef(false);
+  // The in-flight Stop. The next share waits for it so Windows (Desktop
+  // Duplication) and macOS (ScreenCaptureKit) are not asked for a second
+  // capture while the first track is still live.
+  const stopInFlightRef = useRef<Promise<void> | null>(null);
+  // Stop and a newer start advance this so a publish that resolves late cannot
+  // paint "You are sharing your screen" again.
+  const shareEpochRef = useRef(0);
   const stopSharingRef = useRef<() => void>(() => {});
   const floatPanelRef = useRef<HTMLDivElement>(null);
   const floatDragRef = useRef(false);
@@ -2180,8 +2189,18 @@ export default function MeetingRoomPage() {
   const handleLeave = () => { localStreamRef.current?.getTracks().forEach(t => t.stop()); setLocation("/meetings"); };
   const handleEnd = () => { localStreamRef.current?.getTracks().forEach(t => t.stop()); if (meeting) endMutation.mutate({ id: meeting.id }); };
 
+  // Windows and macOS both pause remote playback when a display capture
+  // starts or its track stops, and neither resumes it. Replay on the click
+  // and again after the capture device has actually been released.
+  const resumeRemoteAudio = useCallback(() => {
+    void startRoomAudio();
+    window.setTimeout(() => { void startRoomAudio(); }, 400);
+    window.setTimeout(() => { void startRoomAudio(); }, 1200);
+  }, [startRoomAudio]);
+
   const stopSharing = useCallback(async () => {
-    sharingInProgressRef.current = false;
+    shareEpochRef.current += 1;
+    const captured = screenStreamRef.current;
 
     // Belt-and-suspenders: stop Electron cursor tracking immediately so no
     // rc:cursor-pos IPC events arrive between this call and the useEffect
@@ -2204,20 +2223,40 @@ export default function MeetingRoomPage() {
     setSharingDisplayLabel(null);
     setViewMode("gallery");
     setPinnedUserId(null);
+    resumeRemoteAudio();
 
     // ── Step 2: unpublish BEFORE stopping the track ──────────────────────
     // Calling unpublishScreenShare() while the track is still live lets
     // LiveKit send the proper "track removed" signal to all remote
     // participants.  If we stop() the track first, remotes get stuck on
     // a black tile until the WebRTC cleanup propagates.
+    // Don't wait forever: a hung unpublish would leave the capture live, and
+    // both Windows and macOS keep meeting audio muted while that track lives.
+    const prevStop = stopInFlightRef.current;
+    const run = (prevStop ?? Promise.resolve()).catch(() => {}).then(async () => {
+      try {
+        await Promise.race([
+          unpublishScreenShare(),
+          new Promise<void>((resolve) => { window.setTimeout(resolve, 1500); }),
+        ]);
+      } finally {
+        // ── Step 3: stop only the capture this stop started with ─────────
+        // A second share may already have replaced the ref.
+        if (screenStreamRef.current === captured) screenStreamRef.current = null;
+        captured?.getTracks().forEach(t => t.stop());
+        resumeRemoteAudio();
+      }
+    });
+    stopInFlightRef.current = run;
     try {
-      await unpublishScreenShare();
+      await run;
     } finally {
-      // ── Step 3: stop track regardless of unpublish outcome ─────────────
-      screenStreamRef.current?.getTracks().forEach(t => t.stop());
-      screenStreamRef.current = null;
+      if (stopInFlightRef.current === run) {
+        stopInFlightRef.current = null;
+        if (!startClaimRef.current) sharingInProgressRef.current = false;
+      }
     }
-  }, [unpublishScreenShare, isElectronHost]);
+  }, [unpublishScreenShare, isElectronHost, resumeRemoteAudio]);
   useEffect(() => { stopSharingRef.current = () => { void stopSharing(); }; }, [stopSharing]);
 
   // Browsers block audio until a gesture. Video stays muted so the picture
@@ -2265,14 +2304,30 @@ export default function MeetingRoomPage() {
   };
 
   const startScreenShare = useCallback(async () => {
-    if (sharingInProgressRef.current) return;
+    if (startClaimRef.current || sharingInProgressRef.current) return;
+    startClaimRef.current = true;
     sharingInProgressRef.current = true;
+    const epoch = shareEpochRef.current;
 
     const profile = screenShareProfile(optimizeForVideoClip);
     const wantSystemAudio = shareComputerSound;
     let acquired: MediaStream | null = null;
+    const releaseAcquired = () => {
+      if (acquired && screenStreamRef.current === acquired) screenStreamRef.current = null;
+      acquired?.getTracks().forEach(t => t.stop());
+    };
 
     try {
+      // Finish releasing the previous capture before asking the OS for another.
+      // A second getDisplayMedia while the first track is live leaves the
+      // banner stuck and drops remote audio on both Windows and macOS.
+      while (stopInFlightRef.current) {
+        const pending = stopInFlightRef.current;
+        await pending.catch(() => {});
+        if (stopInFlightRef.current === pending) break;
+      }
+      if (shareEpochRef.current !== epoch) return;
+
       // Keep getDisplayMedia options minimal — passing resolution/framerate
       // constraints into the picker can break Window and Entire Screen capture
       // on Windows (Desktop Duplication API rejects unsupported constraints).
@@ -2286,12 +2341,15 @@ export default function MeetingRoomPage() {
         systemAudio: wantSystemAudio ? "include" : "exclude",
       } as DisplayMediaStreamOptions;
       acquired = await navigator.mediaDevices.getDisplayMedia(displayOptions);
+      if (shareEpochRef.current !== epoch) {
+        releaseAcquired();
+        return;
+      }
 
       const screenTrack = acquired.getVideoTracks()[0];
       if (!screenTrack) {
-        acquired.getTracks().forEach(t => t.stop());
+        releaseAcquired();
         acquired = null;
-        sharingInProgressRef.current = false;
         return;
       }
 
@@ -2302,12 +2360,34 @@ export default function MeetingRoomPage() {
         });
       } catch { /* unsupported on this platform — keep the source frame rate */ }
 
+      if (screenTrack.readyState !== "live" || shareEpochRef.current !== epoch) {
+        releaseAcquired();
+        return;
+      }
+
       const audioTrack = wantSystemAudio ? acquired.getAudioTracks()[0] ?? null : null;
       screenStreamRef.current = acquired;
       // Stop from the browser's own share bar must end the session even if
-      // publish is still in flight.
-      screenTrack.addEventListener("ended", () => { void stopSharing(); }, { once: true });
+      // publish is still in flight. The epoch check ignores the "ended" that
+      // our own track.stop() fires after Stop already ran.
+      screenTrack.addEventListener("ended", () => {
+        if (shareEpochRef.current === epoch) void stopSharingRef.current();
+      }, { once: true });
       await publishScreenShare(screenTrack, { audioTrack, optimizeForVideo: optimizeForVideoClip });
+
+      const readyState = screenTrack.readyState === "live" ? "live" : "ended";
+      if (!shouldCommitLocalScreenShare({
+        attempt: epoch,
+        currentAttempt: shareEpochRef.current,
+        trackReadyState: readyState,
+      })) {
+        // Stop, or a capture that died during publish, already owns the UI.
+        // Committing here is what left the banner and Stop Share stuck.
+        const stillOurs = shareEpochRef.current === epoch;
+        releaseAcquired();
+        if (stillOurs && shareEpochRef.current === epoch) void stopSharingRef.current();
+        return;
+      }
 
       // Detect the surface type so we can adapt the layout accordingly.
       // "browser" = Chrome Tab (works great in-line), "monitor" / "window" /
@@ -2329,6 +2409,8 @@ export default function MeetingRoomPage() {
 
       setScreenStream(acquired);
       setSharing(true);
+      // Capture just started; Chrome will have paused remote playback.
+      resumeRemoteAudio();
 
       // ── Electron multi-monitor: tell the main process which display is shared ──
       // preload.getDisplays() returns { id: number, x, y, width, height, isPrimary }
@@ -2337,6 +2419,7 @@ export default function MeetingRoomPage() {
       if (typeof window !== "undefined" && window.electronRC) {
         try {
           const displays = await window.electronRC.getDisplays();
+          if (shareEpochRef.current !== epoch) return;
           const settings = screenTrack.getSettings() as { width?: number; height?: number; deviceId?: string };
           // Prefer deterministic matching via deviceId: Electron's desktopCapturer
           // sets deviceId to "screen:<electronDisplayId>:<windowIndex>", so we can
@@ -2366,6 +2449,7 @@ export default function MeetingRoomPage() {
           }
           if (match !== undefined) {
             await window.electronRC.setSharedDisplayId(match.id);
+            if (shareEpochRef.current !== epoch) return;
             // Derive a human-readable label for the matched display.
             // Primary display gets a simple label; secondary monitors are
             // numbered starting at 2 (mirrors OS display numbering conventions).
@@ -2398,24 +2482,29 @@ export default function MeetingRoomPage() {
         }, { once: true });
       }
     } catch (err) {
-      sharingInProgressRef.current = false;
       // Publish failed or the picker was dismissed. Stop the capture so the
       // browser share indicator cannot stay up after the session did not start.
-      // Stopping the track also fires "ended", which calls stopSharing().
-      if (acquired && screenStreamRef.current === acquired) {
-        screenStreamRef.current = null;
-      }
-      acquired?.getTracks().forEach(t => t.stop());
-      acquired = null;
-      if (isScreenShareCancel(err)) return;
+      // Snapshot the epoch first: track.stop() fires "ended", which stops the
+      // session, and that must not look like a user Stop that already happened.
+      const userStopped = shareEpochRef.current !== epoch;
+      releaseAcquired();
+      if (userStopped || isScreenShareCancel(err)) return;
+      if (shareEpochRef.current === epoch) void unpublishScreenShare();
       const message = err instanceof Error ? err.message : "Something went wrong";
+      if (message === "Screen capture has ended") return;
       toast({
         title: "Couldn't start screen share",
         description: message,
         variant: "destructive",
       });
+    } finally {
+      startClaimRef.current = false;
+      // Always release the slot. Stop may have advanced the epoch while this
+      // start was waiting; leaving the flag set would block the next share
+      // on either desktop.
+      sharingInProgressRef.current = false;
     }
-  }, [publishScreenShare, stopSharing, optimizeForVideoClip, shareComputerSound, toast]);
+  }, [publishScreenShare, unpublishScreenShare, optimizeForVideoClip, shareComputerSound, toast, resumeRemoteAudio]);
 
   const handleScreenShare = useCallback(async () => {
     if (sharing) {
