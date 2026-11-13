@@ -31,6 +31,7 @@ import type { Participant, MeetingNote } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { useLiveKit, type RemoteStream } from "@/hooks/useLiveKit";
+import { isScreenShareCancel, screenShareProfile, shouldCommitLocalScreenShare } from "@/lib/screenShare";
 import { useCaptions } from "@/hooks/useCaptions";
 import {
   useVirtualBackground, getSavedBackground, saveBackground, type VirtualBg,
@@ -89,6 +90,21 @@ function PresenterCameraTile({ cameraStream, displayName }: { cameraStream: Medi
       </div>
     </div>
   );
+}
+
+// Plays remote microphone and screen-share audio. The video elements stay muted
+// so a blocked autoplay policy cannot freeze the picture on a black frame.
+function RemoteAudio({ stream, trackKey }: { stream: MediaStream | null; trackKey: string }) {
+  const ref = useRef<HTMLAudioElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (el.srcObject !== stream) el.srcObject = stream;
+    if (stream && stream.getAudioTracks().some((t) => t.readyState === "live")) {
+      void el.play().catch(() => {});
+    }
+  }, [stream, trackKey]);
+  return <audio ref={ref} data-remote-media="" autoPlay className="sr-only" />;
 }
 
 // ── Local video tile ──────────────────────────────────────────────────────────
@@ -359,25 +375,27 @@ function RemoteVideoTile({ remote, displayName, isHost, handRaised, index, conne
       return;
     }
     el.srcObject = remote.stream;
-    el.play().catch(() => {});
+    void el.play().catch(() => {});
     const bgEl = bgVideoRef.current;
     if (bgEl) {
       bgEl.srcObject = remote.stream;
-      bgEl.play().catch(() => {});
+      void bgEl.play().catch(() => {});
     }
     const videoTracks = remote.stream.getVideoTracks();
-    setHasVideo(videoTracks.length > 0);
+    setHasVideo(videoTracks.some((t) => t.readyState === "live"));
     const ms = remote.stream;
-    const onChange = () => setHasVideo(ms.getVideoTracks().length > 0);
+    const onChange = () => setHasVideo(ms.getVideoTracks().some((t) => t.readyState === "live"));
     ms.addEventListener("addtrack", onChange);
     ms.addEventListener("removetrack", onChange);
+    videoTracks.forEach((t) => t.addEventListener("unmute", onChange));
     return () => {
       ms.removeEventListener("addtrack", onChange);
       ms.removeEventListener("removetrack", onChange);
+      videoTracks.forEach((t) => t.removeEventListener("unmute", onChange));
       el.srcObject = null;
       if (bgEl) bgEl.srcObject = null;
     };
-  }, [remote.stream]);
+  }, [remote.stream, remote.videoKey]);
 
   // Auto-focus tile when control is granted so keyboard events work immediately
   useEffect(() => {
@@ -615,20 +633,41 @@ function RemoteVideoTile({ remote, displayName, isHost, handRaised, index, conne
     >
       {/* Blurred backdrop for screen share — fills the letterbox bars left/right/top/bottom
           with a dimmed, blurred version of the shared content instead of solid black. */}
-      {remote.isScreenShare && hasVideo && (
+      {remote.isScreenShare && (
         <video
           ref={bgVideoRef}
           autoPlay playsInline muted
           aria-hidden
-          className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl brightness-[0.35] pointer-events-none"
+          data-remote-media=""
+          className={`absolute inset-0 w-full h-full object-cover scale-110 blur-2xl brightness-[0.35] pointer-events-none ${hasVideo && remote.screenShareHold !== "sender" ? "" : "hidden"}`}
         />
       )}
       <video
-        ref={videoRef} autoPlay playsInline disablePictureInPicture
-        className={`absolute inset-0 w-full h-full ${remote.isScreenShare ? "object-contain" : "object-cover"} ${hasVideo ? "" : "hidden"}`}
-        style={{ willChange: "transform", backfaceVisibility: "hidden" }}
+        ref={videoRef} autoPlay playsInline muted disablePictureInPicture
+        data-remote-media=""
+        className={`absolute inset-0 w-full h-full ${remote.isScreenShare ? "object-contain" : "object-cover"} ${hasVideo && remote.screenShareHold !== "sender" ? "" : "hidden"}`}
+        style={{
+          willChange: "transform",
+          backfaceVisibility: "hidden",
+          // object-contain keeps the capture's own aspect ratio. object-cover
+          // would crop a window or a second monitor to fill the tile.
+          objectFit: remote.isScreenShare ? "contain" : "cover",
+        }}
       />
-      {!hasVideo && (
+      {remote.isScreenShare && remote.screenShareHold === "sender" && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-gray-950 text-center px-6">
+          <Monitor className="h-8 w-8 text-amber-400" />
+          <p className="text-white text-sm font-medium">Screen share is paused</p>
+          <p className="text-gray-400 text-xs">The picture will come back when {displayName} resumes.</p>
+        </div>
+      )}
+      {remote.isScreenShare && remote.screenShareHold === "link" && (
+        <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 text-center px-6 ${hasVideo ? "bg-black/55" : "bg-gray-950"}`}>
+          <Loader2 className="h-6 w-6 text-green-400 animate-spin" />
+          <p className="text-white text-sm font-medium">Reconnecting screen…</p>
+        </div>
+      )}
+      {!hasVideo && remote.screenShareHold !== "sender" && remote.screenShareHold !== "link" && (
         <div
           className="absolute inset-0 flex items-center justify-center"
           style={{ background: `radial-gradient(circle at 50% 38%, ${color}28 0%, #0f172a 65%)` }}
@@ -727,6 +766,7 @@ function RemoteVideoTile({ remote, displayName, isHost, handRaised, index, conne
       )}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-3 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-1.5 min-w-0">
+          {remote.isScreenShare && <Monitor className="h-3 w-3 text-green-400 shrink-0" />}
           <span className={`text-white font-medium truncate drop-shadow ${compact ? "text-[10px]" : "text-xs"}`}>
             {displayName}{remote.isScreenShare ? " — Screen" : ""}
           </span>
@@ -1169,6 +1209,16 @@ export default function MeetingRoomPage() {
   const screenStreamRef = useRef<MediaStream | null>(null);
   // Guard: prevents getDisplayMedia from being called while already in-flight
   const sharingInProgressRef = useRef(false);
+  // Synchronous claim so two Share clicks cannot both pass the guard.
+  const startClaimRef = useRef(false);
+  // The in-flight Stop. The next share waits for it so Windows (Desktop
+  // Duplication) and macOS (ScreenCaptureKit) are not asked for a second
+  // capture while the first track is still live.
+  const stopInFlightRef = useRef<Promise<void> | null>(null);
+  // Stop and a newer start advance this so a publish that resolves late cannot
+  // paint "You are sharing your screen" again.
+  const shareEpochRef = useRef(0);
+  const stopSharingRef = useRef<() => void>(() => {});
   const floatPanelRef = useRef<HTMLDivElement>(null);
   const floatDragRef = useRef(false);
   const floatDragStartRef = useRef<{ mx: number; my: number; left: number; top: number } | null>(null);
@@ -1386,7 +1436,7 @@ export default function MeetingRoomPage() {
   };
 
   const {
-    remoteStreams, wsConnected, connectionError, tracksPublished, replaceVideoTrack, publishScreenShare, unpublishScreenShare,
+    remoteStreams, wsConnected, connectionError, tracksPublished, replaceVideoTrack, publishScreenShare, unpublishScreenShare, startRoomAudio,
     sendChatMessage, sendReaction, rename, sendHandRaise, sendRoleChange, sendCaption, sendForceAction,
     peerNames, peerIds, peerHands, peerRoles, peerConnectionStates,
     hostLeftId, clearHostLeft,
@@ -1497,6 +1547,14 @@ export default function MeetingRoomPage() {
         title: "Request timed out",
         description: "The host did not respond to your control request.",
       });
+    },
+    onScreenShareInterrupted: () => {
+      toast({
+        title: "Screen share interrupted",
+        description: "The connection dropped and the share could not be restored. Start it again if you still want to share.",
+        variant: "destructive",
+      });
+      stopSharingRef.current();
     },
     onRcDenied: () => {
       // The host explicitly denied the request — clear the pending indicator and notify.
@@ -2131,8 +2189,18 @@ export default function MeetingRoomPage() {
   const handleLeave = () => { localStreamRef.current?.getTracks().forEach(t => t.stop()); setLocation("/meetings"); };
   const handleEnd = () => { localStreamRef.current?.getTracks().forEach(t => t.stop()); if (meeting) endMutation.mutate({ id: meeting.id }); };
 
+  // Windows and macOS both pause remote playback when a display capture
+  // starts or its track stops, and neither resumes it. Replay on the click
+  // and again after the capture device has actually been released.
+  const resumeRemoteAudio = useCallback(() => {
+    void startRoomAudio();
+    window.setTimeout(() => { void startRoomAudio(); }, 400);
+    window.setTimeout(() => { void startRoomAudio(); }, 1200);
+  }, [startRoomAudio]);
+
   const stopSharing = useCallback(async () => {
-    sharingInProgressRef.current = false;
+    shareEpochRef.current += 1;
+    const captured = screenStreamRef.current;
 
     // Belt-and-suspenders: stop Electron cursor tracking immediately so no
     // rc:cursor-pos IPC events arrive between this call and the useEffect
@@ -2155,20 +2223,52 @@ export default function MeetingRoomPage() {
     setSharingDisplayLabel(null);
     setViewMode("gallery");
     setPinnedUserId(null);
+    resumeRemoteAudio();
 
     // ── Step 2: unpublish BEFORE stopping the track ──────────────────────
     // Calling unpublishScreenShare() while the track is still live lets
     // LiveKit send the proper "track removed" signal to all remote
     // participants.  If we stop() the track first, remotes get stuck on
     // a black tile until the WebRTC cleanup propagates.
+    // Don't wait forever: a hung unpublish would leave the capture live, and
+    // both Windows and macOS keep meeting audio muted while that track lives.
+    const prevStop = stopInFlightRef.current;
+    const run = (prevStop ?? Promise.resolve()).catch(() => {}).then(async () => {
+      try {
+        await Promise.race([
+          unpublishScreenShare(),
+          new Promise<void>((resolve) => { window.setTimeout(resolve, 1500); }),
+        ]);
+      } finally {
+        // ── Step 3: stop only the capture this stop started with ─────────
+        // A second share may already have replaced the ref.
+        if (screenStreamRef.current === captured) screenStreamRef.current = null;
+        captured?.getTracks().forEach(t => t.stop());
+        resumeRemoteAudio();
+      }
+    });
+    stopInFlightRef.current = run;
     try {
-      await unpublishScreenShare();
+      await run;
     } finally {
-      // ── Step 3: stop track regardless of unpublish outcome ─────────────
-      screenStreamRef.current?.getTracks().forEach(t => t.stop());
-      screenStreamRef.current = null;
+      if (stopInFlightRef.current === run) {
+        stopInFlightRef.current = null;
+        if (!startClaimRef.current) sharingInProgressRef.current = false;
+      }
     }
-  }, [unpublishScreenShare, isElectronHost]);
+  }, [unpublishScreenShare, isElectronHost, resumeRemoteAudio]);
+  useEffect(() => { stopSharingRef.current = () => { void stopSharing(); }; }, [stopSharing]);
+
+  // Browsers block audio until a gesture. Video stays muted so the picture
+  // still plays; this retries the remote audio elements after a click.
+  useEffect(() => {
+    const unlock = () => { void startRoomAudio(); };
+    window.addEventListener("pointerdown", unlock);
+    return () => window.removeEventListener("pointerdown", unlock);
+  }, [startRoomAudio]);
+  useEffect(() => {
+    if (wsConnected) void startRoomAudio();
+  }, [wsConnected, startRoomAudio]);
 
 
   // Float panel drag — manipulates DOM directly for smooth motion, syncs to state on release
@@ -2204,46 +2304,90 @@ export default function MeetingRoomPage() {
   };
 
   const startScreenShare = useCallback(async () => {
-    if (sharingInProgressRef.current) return;
+    if (startClaimRef.current || sharingInProgressRef.current) return;
+    startClaimRef.current = true;
     sharingInProgressRef.current = true;
+    const epoch = shareEpochRef.current;
+
+    const profile = screenShareProfile(optimizeForVideoClip);
+    const wantSystemAudio = shareComputerSound;
+    let acquired: MediaStream | null = null;
+    const releaseAcquired = () => {
+      if (acquired && screenStreamRef.current === acquired) screenStreamRef.current = null;
+      acquired?.getTracks().forEach(t => t.stop());
+    };
 
     try {
+      // Finish releasing the previous capture before asking the OS for another.
+      // A second getDisplayMedia while the first track is live leaves the
+      // banner stuck and drops remote audio on both Windows and macOS.
+      while (stopInFlightRef.current) {
+        const pending = stopInFlightRef.current;
+        await pending.catch(() => {});
+        if (stopInFlightRef.current === pending) break;
+      }
+      if (shareEpochRef.current !== epoch) return;
+
       // Keep getDisplayMedia options minimal — passing resolution/framerate
       // constraints into the picker can break Window and Entire Screen capture
       // on Windows (Desktop Duplication API rejects unsupported constraints).
-      // We apply constraints AFTER acquisition instead.
-      const screen = await navigator.mediaDevices.getDisplayMedia({
+      // Frame rate is applied AFTER acquisition. Width and height are left
+      // alone so a window or ultrawide display keeps its real aspect ratio.
+      const displayOptions = {
         video: true,
-        audio: false,
+        audio: wantSystemAudio,
         selfBrowserSurface: "exclude",
         surfaceSwitching: "include",
-        systemAudio: "exclude",
-      } as DisplayMediaStreamOptions);
-
-      const screenTrack = screen.getVideoTracks()[0];
-      if (!screenTrack) {
-        screen.getTracks().forEach(t => t.stop());
-        sharingInProgressRef.current = false;
+        systemAudio: wantSystemAudio ? "include" : "exclude",
+      } as DisplayMediaStreamOptions;
+      acquired = await navigator.mediaDevices.getDisplayMedia(displayOptions);
+      if (shareEpochRef.current !== epoch) {
+        releaseAcquired();
         return;
       }
 
-      // "detail" tells the encoder to preserve sharpness (text/UI) instead of
-      // optimising for motion smoothness — critical for Window & Screen captures.
-      screenTrack.contentHint = "detail";
+      const screenTrack = acquired.getVideoTracks()[0];
+      if (!screenTrack) {
+        releaseAcquired();
+        acquired = null;
+        return;
+      }
 
-      // Cap resolution and framerate after acquisition so the picker isn't
-      // constrained.  applyConstraints is best-effort; ignore failures.
+      screenTrack.contentHint = profile.contentHint;
       try {
         await screenTrack.applyConstraints({
-          width:     { ideal: 1920, max: 1920 },
-          height:    { ideal: 1080, max: 1080 },
-          frameRate: { ideal: 30,   max: 30   },
+          frameRate: { ideal: profile.maxFramerate, max: profile.maxFramerate },
         });
-      } catch { /* unsupported on this platform — proceed with native resolution */ }
+      } catch { /* unsupported on this platform — keep the source frame rate */ }
 
-      screenStreamRef.current = screen;
-      await publishScreenShare(screenTrack);
-      screenTrack.addEventListener("ended", () => { void stopSharing(); }, { once: true });
+      if (screenTrack.readyState !== "live" || shareEpochRef.current !== epoch) {
+        releaseAcquired();
+        return;
+      }
+
+      const audioTrack = wantSystemAudio ? acquired.getAudioTracks()[0] ?? null : null;
+      screenStreamRef.current = acquired;
+      // Stop from the browser's own share bar must end the session even if
+      // publish is still in flight. The epoch check ignores the "ended" that
+      // our own track.stop() fires after Stop already ran.
+      screenTrack.addEventListener("ended", () => {
+        if (shareEpochRef.current === epoch) void stopSharingRef.current();
+      }, { once: true });
+      await publishScreenShare(screenTrack, { audioTrack, optimizeForVideo: optimizeForVideoClip });
+
+      const readyState = screenTrack.readyState === "live" ? "live" : "ended";
+      if (!shouldCommitLocalScreenShare({
+        attempt: epoch,
+        currentAttempt: shareEpochRef.current,
+        trackReadyState: readyState,
+      })) {
+        // Stop, or a capture that died during publish, already owns the UI.
+        // Committing here is what left the banner and Stop Share stuck.
+        const stillOurs = shareEpochRef.current === epoch;
+        releaseAcquired();
+        if (stillOurs && shareEpochRef.current === epoch) void stopSharingRef.current();
+        return;
+      }
 
       // Detect the surface type so we can adapt the layout accordingly.
       // "browser" = Chrome Tab (works great in-line), "monitor" / "window" /
@@ -2263,8 +2407,10 @@ export default function MeetingRoomPage() {
         });
       }
 
-      setScreenStream(screen);
+      setScreenStream(acquired);
       setSharing(true);
+      // Capture just started; Chrome will have paused remote playback.
+      resumeRemoteAudio();
 
       // ── Electron multi-monitor: tell the main process which display is shared ──
       // preload.getDisplays() returns { id: number, x, y, width, height, isPrimary }
@@ -2273,6 +2419,7 @@ export default function MeetingRoomPage() {
       if (typeof window !== "undefined" && window.electronRC) {
         try {
           const displays = await window.electronRC.getDisplays();
+          if (shareEpochRef.current !== epoch) return;
           const settings = screenTrack.getSettings() as { width?: number; height?: number; deviceId?: string };
           // Prefer deterministic matching via deviceId: Electron's desktopCapturer
           // sets deviceId to "screen:<electronDisplayId>:<windowIndex>", so we can
@@ -2302,6 +2449,7 @@ export default function MeetingRoomPage() {
           }
           if (match !== undefined) {
             await window.electronRC.setSharedDisplayId(match.id);
+            if (shareEpochRef.current !== epoch) return;
             // Derive a human-readable label for the matched display.
             // Primary display gets a simple label; secondary monitors are
             // numbered starting at 2 (mirrors OS display numbering conventions).
@@ -2333,11 +2481,30 @@ export default function MeetingRoomPage() {
           })();
         }, { once: true });
       }
-    } catch {
+    } catch (err) {
+      // Publish failed or the picker was dismissed. Stop the capture so the
+      // browser share indicator cannot stay up after the session did not start.
+      // Snapshot the epoch first: track.stop() fires "ended", which stops the
+      // session, and that must not look like a user Stop that already happened.
+      const userStopped = shareEpochRef.current !== epoch;
+      releaseAcquired();
+      if (userStopped || isScreenShareCancel(err)) return;
+      if (shareEpochRef.current === epoch) void unpublishScreenShare();
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      if (message === "Screen capture has ended") return;
+      toast({
+        title: "Couldn't start screen share",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      startClaimRef.current = false;
+      // Always release the slot. Stop may have advanced the epoch while this
+      // start was waiting; leaving the flag set would block the next share
+      // on either desktop.
       sharingInProgressRef.current = false;
-      // User cancelled — no toast needed
     }
-  }, [publishScreenShare, stopSharing]);
+  }, [publishScreenShare, unpublishScreenShare, optimizeForVideoClip, shareComputerSound, toast, resumeRemoteAudio]);
 
   const handleScreenShare = useCallback(async () => {
     if (sharing) {
@@ -2522,9 +2689,9 @@ export default function MeetingRoomPage() {
   }, []);
 
   const handleScreenPickerSelect = useCallback((sourceId: string) => {
-    window.electronRC?.pickScreenSource(sourceId);
+    window.electronRC?.pickScreenSource(sourceId, shareComputerSound);
     setScreenPickerSources(null);
-  }, []);
+  }, [shareComputerSound]);
 
   const handleScreenPickerCancel = useCallback(() => {
     window.electronRC?.pickScreenSource(null);
@@ -2659,9 +2826,10 @@ export default function MeetingRoomPage() {
         return;
       }
 
-      // Collect local + all remote streams (remote streams include their audio tracks).
-      // Filter out null — participants with camera+mic off have stream=null.
-      const allStreams: MediaStream[] = [localS, ...remoteStreams.map(r => r.stream).filter((s): s is MediaStream => s !== null)];
+      // Picture and sound are separate. Remote microphone and screen-share audio
+      // live on audioStream so the video element can stay muted.
+      const pictureStreams: MediaStream[] = [localS, ...remoteStreams.map(r => r.stream).filter((s): s is MediaStream => s !== null)];
+      const audioSources: MediaStream[] = [localS, ...remoteStreams.map(r => r.audioStream).filter((s): s is MediaStream => s !== null)];
 
       // ── 1. Composite canvas ───────────────────────────────────────────────
       const REC_W = 1280, REC_H = 720;
@@ -2670,7 +2838,7 @@ export default function MeetingRoomPage() {
       const recCtx = recCanvas.getContext("2d")!;
 
       // One muted <video> per stream — used only for drawing to the canvas
-      const recVideos: HTMLVideoElement[] = allStreams.map(s => {
+      const recVideos: HTMLVideoElement[] = pictureStreams.map(s => {
         const v = document.createElement("video");
         v.srcObject = s; v.autoplay = true; v.playsInline = true; v.muted = true;
         v.play().catch(() => {});
@@ -2717,7 +2885,7 @@ export default function MeetingRoomPage() {
         const audioCtx = new AudioContext();
         recordingAudioCtxRef.current = audioCtx;
         const destination = audioCtx.createMediaStreamDestination();
-        allStreams.forEach(s => {
+        audioSources.forEach(s => {
           const audio = s.getAudioTracks();
           if (audio.length > 0) {
             try {
@@ -2942,6 +3110,15 @@ export default function MeetingRoomPage() {
 
   // ── Auto-switch to speaker view when screen sharing starts / stops ───────────
   const anyoneSharing = sharing || !!screenShareRemote;
+  const shareBannerText = sharing
+    ? "You are sharing your screen"
+    : screenShareRemote
+      ? `${peerNames.get(screenShareRemote.userId) ?? "A participant"} is sharing their screen${
+          screenShareRemote.screenShareHold === "sender" ? " — paused"
+          : screenShareRemote.screenShareHold === "link" ? " — reconnecting"
+          : ""
+        }`
+      : "";
   const prevAnyoneSharingRef = useRef(false);
   useEffect(() => {
     const was = prevAnyoneSharingRef.current;
@@ -3041,9 +3218,21 @@ export default function MeetingRoomPage() {
     );
   }
 
+  const presenterStripCamera = !sharing && screenShareRemote?.cameraStream ? (
+    <div className="shrink-0 rounded-2xl overflow-hidden" style={{ height: "99px" }}>
+      <PresenterCameraTile
+        cameraStream={screenShareRemote.cameraStream}
+        displayName={peerNames.get(screenShareRemote.userId) ?? screenShareRemote.userId.slice(0, 8)}
+      />
+    </div>
+  ) : null;
+
   return (
     <VideoEnhancementContext.Provider value={{ cssFilter, cssTransform }}>
     <div className="flex flex-col h-screen bg-gray-950">
+      {remoteStreams.map((remote) => (
+        <RemoteAudio key={remote.userId} stream={remote.audioStream} trackKey={remote.audioKey} />
+      ))}
       {/* ── Zoom-style popup notifications ──────────────────────────────────── */}
       <MeetingPopupStack popups={roomPopups} onDismiss={dismissRoomPopup} />
       {/* ── Persistent RC banners ──────────────────────────────────────────── */}
@@ -3342,6 +3531,23 @@ export default function MeetingRoomPage() {
         </div>
       )}
 
+      {/* Share indicator — stays visible even if the video panel is hidden. */}
+      {anyoneSharing && shareBannerText && (
+        <div className="flex items-center gap-2 bg-green-950 border-b border-green-800 px-4 py-2 text-sm">
+          <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse shrink-0" />
+          <Monitor className="h-4 w-4 text-green-400 shrink-0" />
+          <span className="text-green-100 font-medium flex-1 truncate">{shareBannerText}</span>
+          {sharing && (
+            <button
+              onClick={() => { void stopSharing(); }}
+              className="shrink-0 rounded-md bg-green-700 hover:bg-green-600 text-white text-xs font-medium px-3 py-1 transition-colors"
+            >
+              Stop sharing
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Main area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Video grid */}
@@ -3425,7 +3631,7 @@ export default function MeetingRoomPage() {
                     <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse shrink-0" />
                     <Monitor className="h-3.5 w-3.5 text-green-400 shrink-0" />
                     <span className="text-green-300 font-medium">
-                      {sharing ? "You are sharing your screen" : `${peerNames.get(screenShareRemote!.userId) ?? "A participant"} is sharing their screen`}
+                      {shareBannerText}
                     </span>
                   </div>
                   {/* Screen share tile fills remaining height */}
@@ -3466,6 +3672,7 @@ export default function MeetingRoomPage() {
                     />
                   </div>
                   )}
+                  {presenterStripCamera}
                   {/* Remote camera tiles — capped at 8 in sidebar strip */}
                   {remoteStreams.filter(r => !r.isScreenShare).slice(0, 8).map((remote, i) => {
                     const name = peerNames.get(remote.userId) ?? admitted.find(p => p.clerkId === clerkIdFromLiveKitId(remote.userId))?.displayName ?? remote.userId.slice(0, 8);
@@ -3583,7 +3790,7 @@ export default function MeetingRoomPage() {
                     <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse shrink-0" />
                     <Monitor className="h-3.5 w-3.5 text-green-400 shrink-0" />
                     <span className="text-green-300 font-medium">
-                      {sharing ? "You are sharing your screen" : `${peerNames.get(screenShareRemote!.userId) ?? "A participant"} is sharing their screen`}
+                      {shareBannerText}
                     </span>
                   </div>
                   {/* Screen share tile fills remaining height */}
@@ -3621,6 +3828,7 @@ export default function MeetingRoomPage() {
                         />
                       </div>
                     )}
+                    {presenterStripCamera}
                     {cameraRemotes.map((remote, i) => {
                       const name = peerNames.get(remote.userId) ?? admitted.find(p => p.clerkId === clerkIdFromLiveKitId(remote.userId))?.displayName ?? remote.userId.slice(0, 8);
                       return (
@@ -3690,9 +3898,9 @@ export default function MeetingRoomPage() {
                       {showLocalInStrip && !showSelfCamPip && (
                         <div className="shrink-0 cursor-pointer" style={{ width: "226px" }} onClick={() => setPinnedUserId("__local__")}>
                           <LocalVideoTile
-                            displayName={localDisplayName} stream={activeStream} screenStream={screenStream}
-                            videoOn={videoOn} micOn={micOn} handRaised={handRaised} isHost={isHost} sharing={sharing}
-                            controllerPointer={controllerPointer} isBeingControlled={!!rcGrantedTo} rcClickPos={rcClickPos}
+                            displayName={localDisplayName} stream={activeStream} screenStream={null}
+                            videoOn={videoOn} micOn={micOn} handRaised={handRaised} isHost={isHost} sharing={false}
+                            controllerPointer={null} isBeingControlled={false}
                             compact onPin={() => setPinnedUserId("__local__")} isPinned={pinnedUserId === "__local__"}
                           />
                         </div>
@@ -3734,9 +3942,7 @@ export default function MeetingRoomPage() {
                   <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse shrink-0" />
                   <Monitor className="h-3.5 w-3.5 text-green-400 shrink-0" />
                   <span className="text-green-300 font-medium">
-                    {sharing
-                      ? "You are sharing your screen"
-                      : `${peerNames.get(screenShareRemote!.userId) ?? "A participant"} is sharing their screen`}
+                    {shareBannerText}
                   </span>
                 </div>
               )}
@@ -3744,12 +3950,18 @@ export default function MeetingRoomPage() {
                 {/* Main content area */}
                 <div className="flex-1 min-w-0">
                   {featuredIsLocal ? (
+                    sharing ? (
+                      <SharingPlaceholderTile
+                        displayName={localDisplayName} stream={activeStream} videoOn={videoOn}
+                      />
+                    ) : (
                     <LocalVideoTile
                       displayName={localDisplayName} stream={activeStream} screenStream={screenStream}
                       videoOn={videoOn} micOn={micOn} handRaised={handRaised} isHost={isHost} sharing={sharing}
                       controllerPointer={controllerPointer} isBeingControlled={!!rcGrantedTo} rcClickPos={rcClickPos}
                       fill
                     />
+                    )
                   ) : (
                     <RemoteVideoTile
                       remote={featuredRemote!}
@@ -3779,9 +3991,9 @@ export default function MeetingRoomPage() {
                   {showLocalInStrip && !showSelfCamPip && (
                     <div className="shrink-0 cursor-pointer aspect-video" onClick={() => setPinnedUserId("__local__")}>
                       <LocalVideoTile
-                        displayName={localDisplayName} stream={activeStream} screenStream={screenStream}
-                        videoOn={videoOn} micOn={micOn} handRaised={handRaised} isHost={isHost} sharing={sharing}
-                        controllerPointer={controllerPointer} isBeingControlled={!!rcGrantedTo} rcClickPos={rcClickPos}
+                        displayName={localDisplayName} stream={activeStream} screenStream={null}
+                        videoOn={videoOn} micOn={micOn} handRaised={handRaised} isHost={isHost} sharing={false}
+                        controllerPointer={null} isBeingControlled={false}
                         compact onPin={() => setPinnedUserId("__local__")} isPinned={pinnedUserId === "__local__"}
                       />
                     </div>
@@ -4748,7 +4960,13 @@ export default function MeetingRoomPage() {
 
                 {/* Group 5 — audio/video quality */}
                 <button
-                  onClick={() => { setShareComputerSound(v => !v); setShowMoreMenu(false); }}
+                  onClick={() => {
+                    setShareComputerSound(v => !v);
+                    setShowMoreMenu(false);
+                    if (sharing) {
+                      toast({ title: "Share computer sound", description: "Stop sharing and start again to apply this.", duration: 3000 });
+                    }
+                  }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-200 hover:bg-gray-800 text-left"
                 >
                   <Volume2 className="h-4 w-4 text-gray-400 shrink-0" />
@@ -4756,7 +4974,20 @@ export default function MeetingRoomPage() {
                   {shareComputerSound && <span className="text-xs text-blue-400 font-medium">On</span>}
                 </button>
                 <button
-                  onClick={() => { setOptimizeForVideoClip(v => !v); setShowMoreMenu(false); toast({ title: optimizeForVideoClip ? "Optimize for video clip disabled" : "Optimized for video clip", description: optimizeForVideoClip ? "Back to standard quality." : "Higher frame rate & bitrate enabled for smoother video playback.", duration: 3000 }); }}
+                  onClick={() => {
+                    const turningOn = !optimizeForVideoClip;
+                    setOptimizeForVideoClip(turningOn);
+                    setShowMoreMenu(false);
+                    toast({
+                      title: turningOn ? "Optimized for video clip" : "Optimize for video clip disabled",
+                      description: sharing
+                        ? "Stop sharing and start again to apply this."
+                        : turningOn
+                          ? "The next share uses a higher frame rate for motion."
+                          : "The next share favors sharp text.",
+                      duration: 3000,
+                    });
+                  }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-200 hover:bg-gray-800 text-left"
                 >
                   <Video className="h-4 w-4 text-gray-400 shrink-0" />
