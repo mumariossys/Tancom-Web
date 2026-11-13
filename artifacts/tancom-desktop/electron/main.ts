@@ -1,14 +1,80 @@
-import { app, BrowserWindow, ipcMain, Menu, shell, session, clipboard, desktopCapturer } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell, session, clipboard, desktopCapturer } from "electron";
 import path from "path";
 
-// robotjs ships prebuilt native binaries for Windows/macOS/Linux.
-// Types are provided by electron/robotjs.d.ts (no @types package needed).
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const robot = require("robotjs");
+// robotjs is a native addon. Windows Application Control (WDAC / Smart App
+// Control / company policy) can block the unsigned robotjs.node and throw
+// from require(). Loading it at startup takes the whole process down before
+// a window exists. Load it only when a remote-control action needs it.
+interface RobotApi {
+  setMouseDelay(delay: number): void;
+  setKeyboardDelay(delay: number): void;
+  moveMouse(x: number, y: number): void;
+  mouseClick(button?: "left" | "right", double?: boolean): void;
+  mouseToggle(action: "up" | "down", button?: "left" | "right"): void;
+  scrollMouse(x: number, y: number): void;
+  getMousePos(): { x: number; y: number };
+  keyTap(key: string, modifier?: string | string[]): void;
+}
 
-// Make mouse movement instantaneous for remote control (no animation delay).
-robot.setMouseDelay(0);
-robot.setKeyboardDelay(0);
+let robotApi: RobotApi | null = null;
+let robotLoadAttempted = false;
+let robotUnavailableReason: string | null = null;
+let robotWarningShown = false;
+
+function loadRobot(): RobotApi | null {
+  if (robotApi) return robotApi;
+  if (robotLoadAttempted) return null;
+  robotLoadAttempted = true;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const loaded = require("robotjs") as RobotApi;
+    loaded.setMouseDelay(0);
+    loaded.setKeyboardDelay(0);
+    robotApi = loaded;
+    console.log("[TanCom Desktop] robotjs loaded for remote control.");
+    return robotApi;
+  } catch (err) {
+    robotUnavailableReason = err instanceof Error ? err.message : String(err);
+    console.error(
+      "[TanCom Desktop] robotjs could not be loaded. Mouse and keyboard injection is disabled.",
+      robotUnavailableReason,
+    );
+    return null;
+  }
+}
+
+function explainRobotUnavailable(action: string): void {
+  const detail = robotUnavailableReason
+    ? `Windows blocked or failed to load the remote-control module (robotjs).\n\n${robotUnavailableReason}\n\nTanCom stays open. Screen sharing still works. Mouse and keyboard injection from a remote controller does not.`
+    : "Windows blocked or failed to load the remote-control module (robotjs). TanCom stays open. Screen sharing still works. Mouse and keyboard injection from a remote controller does not.";
+  console.error(`[TanCom Desktop] ${action}: mouse and keyboard injection is disabled. ${robotUnavailableReason ?? ""}`);
+  if (robotWarningShown) return;
+  robotWarningShown = true;
+  const options: Electron.MessageBoxOptions = {
+    type: "warning",
+    title: "TanCom remote control",
+    message: "Mouse and keyboard control is unavailable",
+    detail,
+  };
+  const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+  const shown = parent ? dialog.showMessageBox(parent, options) : dialog.showMessageBox(options);
+  shown.catch((err) => {
+    console.error("[TanCom Desktop] could not show the remote-control warning:", err);
+  });
+}
+
+function withRobot(action: string, fn: (robot: RobotApi) => void): void {
+  const robot = loadRobot();
+  if (!robot) {
+    explainRobotUnavailable(action);
+    return;
+  }
+  try {
+    fn(robot);
+  } catch (err) {
+    console.error(`[TanCom Desktop] ${action} failed:`, err);
+  }
+}
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const TANCOM_URL = process.env["TANCOM_URL"] ?? "https://tancom.us";
@@ -251,36 +317,30 @@ function toAbsolute(x: number, y: number): [number, number] {
 }
 
 ipcMain.on("rc:move-mouse", (_event, x: number, y: number) => {
-  try {
+  withRobot("rc:move-mouse", (robot) => {
     const [ax, ay] = toAbsolute(x, y);
     robot.moveMouse(ax, ay);
-  } catch (err) {
-    console.error("[TanCom Desktop] rc:move-mouse failed:", err);
-  }
+  });
 });
 
 ipcMain.on("rc:click", (_event, x: number, y: number, button: "left" | "right") => {
-  try {
+  withRobot("rc:click", (robot) => {
     const [ax, ay] = toAbsolute(x, y);
     robot.moveMouse(ax, ay);
     robot.mouseClick(button === "right" ? "right" : "left");
-  } catch (err) {
-    console.error("[TanCom Desktop] rc:click failed:", err);
-  }
+  });
 });
 
 ipcMain.on("rc:double-click", (_event, x: number, y: number) => {
-  try {
+  withRobot("rc:double-click", (robot) => {
     const [ax, ay] = toAbsolute(x, y);
     robot.moveMouse(ax, ay);
     robot.mouseClick("left", true); // second arg = double-click
-  } catch (err) {
-    console.error("[TanCom Desktop] rc:double-click failed:", err);
-  }
+  });
 });
 
 ipcMain.on("rc:scroll", (_event, x: number, y: number, dx: number, dy: number) => {
-  try {
+  withRobot("rc:scroll", (robot) => {
     const [ax, ay] = toAbsolute(x, y);
     robot.moveMouse(ax, ay);
     // robotjs scrollMouse(x, y): positive y = scroll down, positive x = scroll right
@@ -289,13 +349,11 @@ ipcMain.on("rc:scroll", (_event, x: number, y: number, dx: number, dy: number) =
       const scrollY = dy !== 0 ? Math.max(1, Math.abs(Math.round(dy))) * Math.sign(dy) : 0;
       robot.scrollMouse(scrollX, scrollY);
     }
-  } catch (err) {
-    console.error("[TanCom Desktop] rc:scroll failed:", err);
-  }
+  });
 });
 
 ipcMain.on("rc:key-tap", (_event, key: string, modifiers: string[]) => {
-  try {
+  withRobot("rc:key-tap", (robot) => {
     // Normalize browser key name → canonical robotjs lowercase name
     const canonical = BROWSER_KEY_MAP[key] ?? key.toLowerCase();
 
@@ -309,9 +367,7 @@ ipcMain.on("rc:key-tap", (_event, key: string, modifiers: string[]) => {
     } else {
       robot.keyTap(canonical);
     }
-  } catch (err) {
-    console.error("[TanCom Desktop] rc:key-tap failed:", err);
-  }
+  });
 });
 
 // Returns the size of the currently shared display (width/height only — no offset).
@@ -349,38 +405,34 @@ ipcMain.handle("rc:set-shared-display-id", (_event, displayId: number) => {
 // controllers can drag windows, select text, reorder items, etc. on the host.
 
 ipcMain.on("rc:drag-start", (_event, x: number, y: number) => {
-  try {
+  withRobot("rc:drag-start", (robot) => {
     const [ax, ay] = toAbsolute(x, y);
     robot.moveMouse(ax, ay);
     robot.mouseToggle("down", "left");
-  } catch (err) {
-    console.error("[TanCom Desktop] rc:drag-start failed:", err);
-  }
+  });
 });
 
 ipcMain.on("rc:drag-to", (_event, x: number, y: number) => {
-  try {
+  withRobot("rc:drag-to", (robot) => {
     const [ax, ay] = toAbsolute(x, y);
     robot.moveMouse(ax, ay);
-  } catch (err) {
-    console.error("[TanCom Desktop] rc:drag-to failed:", err);
-  }
+  });
 });
 
 ipcMain.on("rc:drag-end", (_event, x: number, y: number) => {
-  try {
+  withRobot("rc:drag-end", (robot) => {
     const [ax, ay] = toAbsolute(x, y);
     robot.moveMouse(ax, ay);
     robot.mouseToggle("up", "left");
-  } catch (err) {
-    console.error("[TanCom Desktop] rc:drag-end failed:", err);
-  }
+  });
 });
 
 // Safety net: if the controller disconnects mid-drag the mouse button stays
 // held. This handler lets the renderer release it on cleanup.
 ipcMain.on("rc:drag-cancel", () => {
-  try { robot.mouseToggle("up", "left"); } catch { /* ignore */ }
+  withRobot("rc:drag-cancel", (robot) => {
+    robot.mouseToggle("up", "left");
+  });
 });
 
 // ── Clipboard Sync ────────────────────────────────────────────────────────────
@@ -400,6 +452,11 @@ let cursorTrackingInterval: ReturnType<typeof setInterval> | null = null;
 
 ipcMain.on("rc:start-cursor-tracking", () => {
   if (cursorTrackingInterval) return;
+  const robot = loadRobot();
+  if (!robot) {
+    explainRobotUnavailable("rc:start-cursor-tracking");
+    return;
+  }
   cursorTrackingInterval = setInterval(() => {
     if (!mainWindow) return;
     try {
