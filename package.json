@@ -15,7 +15,7 @@
     "build": "pnpm typecheck && pnpm build:web && pnpm build:api",
     "dev:web": "node --env-file-if-exists=.env tools/run.mjs dev-web",
     "dev:api": "node --env-file-if-exists=.env tools/run.mjs dev-api",
-    "test": "node --test tools/export.test.mjs docs/security/clerk-trust-review/compatibility.test.mjs",
+    "test": "node --test tools/export.test.mjs docs/security/clerk-trust-review/compatibility.test.mjs && node --experimental-strip-types --test artifacts/tancom/src/lib/screenShare.test.ts",
     "verify:source": "node tools/verify-source.mjs",
     "scan:credentials": "node tools/scan-credentials.mjs"
   },

@@ -140,8 +140,9 @@ interface ElectronRC {
   /**
    * Tell the Electron main process which source the user selected.
    * Pass `null` to cancel (getDisplayMedia will reject).
+   * `withSystemAudio` captures the desktop mix when Share computer sound is on.
    */
-  pickScreenSource(sourceId: string | null): void;
+  pickScreenSource(sourceId: string | null, withSystemAudio?: boolean): void;
 }
 
 interface Window {
