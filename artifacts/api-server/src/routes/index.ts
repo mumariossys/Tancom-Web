@@ -29,6 +29,7 @@ import aiAssistRouter from "./aiAssist";
 import debugRouter from "./debug";
 import phoneRouter from "./phone";
 import accountRouter from "./account";
+import desktopDownloadsRouter from "./desktopDownloads";
 
 const router: IRouter = Router();
 
@@ -62,5 +63,6 @@ router.use(aiAssistRouter);
 router.use(debugRouter);
 router.use(phoneRouter);
 router.use(accountRouter);
+router.use(desktopDownloadsRouter);
 
 export default router;

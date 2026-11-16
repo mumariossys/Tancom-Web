@@ -28,6 +28,7 @@ import OnboardingPage from "@/pages/Onboarding";
 import AdminPage from "@/pages/Admin";
 import BusinessToolsPage from "@/pages/BusinessTools";
 import DownloadPage from "@/pages/Download";
+import DownloadsPage from "@/pages/Downloads";
 import JoinGroupPage from "@/pages/JoinGroup";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicy";
 import TermsOfServicePage from "@/pages/TermsOfService";
@@ -256,6 +257,7 @@ function ClerkProviderWithRoutes() {
               <ProtectedRoute component={AdminPage} />
             </Route>
             <Route path="/download" component={DownloadPage} />
+            <Route path="/downloads" component={DownloadsPage} />
             {/* Legal & info pages — accessible without sign-in */}
             <Route path="/privacy" component={PrivacyPolicyPage} />
             <Route path="/privacy-policy" component={PrivacyPolicyPage} />

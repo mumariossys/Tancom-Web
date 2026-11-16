@@ -61,6 +61,11 @@ screenshots/
 generated-artifacts/
 *.exe
 *.dmg
+*.AppImage
+# Packaged desktop apps are hosted on the Repl, not committed.
+/downloads/*
+!/downloads/README.md
+artifacts/tancom-desktop/packaging-out/
 *.ipa
 *.apk
 *.aab

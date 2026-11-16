@@ -250,7 +250,7 @@ export default function LandingPage() {
               <LogIn className="h-4 w-4" />
               Join a Meeting
             </Button>
-            <Link href="/download">
+            <Link href="/downloads">
               <Button variant="ghost" size="sm" className="gap-1.5 text-gray-700">
                 <Download className="h-4 w-4" />
                 Download
